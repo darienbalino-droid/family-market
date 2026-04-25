@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🧾 La Family Market - POS</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0f172a;
+        }
+
+        .app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        .header {
+            flex-shrink: 0;
+            padding: 16px;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+            text-align: center;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .btn-panel-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #22c55e;
+            text-decoration: none;
+        }
+
+        /* CONTENIDO SCROLL */
+        .contenido-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 120px; /* espacio para flotante + tab */
+        }
+
+        /* ACCIONES FLOTANTES */
+        .acciones-flotantes {
+            position: fixed;
+            bottom: 70px;
+            left: 16px;
+            right: 16px;
+            background: #22c55e;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            z-index: 20;
+        }
+
+        .acciones-flotantes.hidden {
+            display: none;
+        }
+
+        .acciones-flotantes button {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* TAB BAR */
+        .tab-bar {
+            flex-shrink: 0;
+            display: flex;
+            background: #0f172a;
+            padding: 8px;
+            gap: 6px;
+            border-top: 1px solid #334155;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #1e293b;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .tab-btn.active {
+            background: #22c55e;
+            color: #0f172a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <h2>🧾 LA FAMILY MARKET</h2>
+            <p class="subtitle">Punto de Venta PRO</p>
+            <a href="panel.html" class="btn-panel-link">⚙️ PANEL DEL JEFE</a>
+        </div>
+
+        <!-- CONTENIDO DINÁMICO -->
+        <div id="contenidoDinamico" class="contenido-scroll"></div>
+
+        <!-- ACCIONES -->
+        <div id="accionesFlotantes" class="acciones-flotantes hidden">
+            <span id="totalSeleccionado">$0.00</span>
+            <button onclick="verCarrito()">REVISAR VENTA 🛒</button>
+        </div>
+
+        <!-- TAB BAR -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="cambiarTab('vender', this)">🛒 Vender</button>
+            <button class="tab-btn" onclick="cambiarTab('caja', this)">💰 Caja</button>
+            <button class="tab-btn" onclick="cambiarTab('informes', this)">📊 Informes</button>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>

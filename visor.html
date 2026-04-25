@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>👁️ Visor Remoto - La Family Market</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f1a;
+            color: white;
+            min-height: 100vh;
+        }
+        .container { max-width: 500px; margin: auto; min-height: 100vh; background: linear-gradient(180deg, #0f172a 0%, #1a2538 100%); padding-bottom: 40px; }
+        .center { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; padding: 20px; text-align: center; }
+        .center h2 { color: #f1c40f; font-size: 28px; margin-bottom: 8px; }
+        .center p { color: #94a3b8; margin-bottom: 20px; }
+        input { width: 100%; max-width: 300px; padding: 16px; border-radius: 16px; border: 2px solid #334155; background: #1e293b; color: white; font-size: 18px; text-align: center; margin: 12px 0; outline: none; }
+        input:focus { border-color: #f1c40f; }
+        button { width: 100%; max-width: 300px; padding: 16px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f1c40f, #e0b800); font-weight: 800; color: #0f172a; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b8960c; }
+        button:active { transform: scale(0.97); }
+        .btn-salir { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; margin: 20px auto; display: block; box-shadow: 0 4px 0 #991b1b; }
+        .hidden { display: none !important; }
+        .topbar { text-align: center; padding: 20px; background: #1e293b; border-bottom: 2px solid #f1c40f; color: #f1c40f; font-size: 16px; font-weight: bold; }
+        .card { background: linear-gradient(160deg, #1a2538, #0f172a); margin: 16px; padding: 20px; border-radius: 24px; border: 1px solid #334155; box-shadow: 0 4px 0 #0a0f1a; }
+        .card h3 { color: #f1c40f; font-size: 14px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .ganancias-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .ganancia-mini { background: linear-gradient(180deg, #1e293b, #162032); border-radius: 18px; padding: 15px; text-align: center; border: 1px solid #334155; box-shadow: 0 3px 0 #0a0f1a; }
+        .g-label { color: #94a3b8; font-size: 10px; display: block; margin-bottom: 5px; text-transform: uppercase; }
+        .g-valor { color: #25D366; font-weight: 800; font-size: 20px; }
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+        .row:last-child { border-bottom: none; }
+        .ok { color: #25D366; font-weight: bold; }
+        .bad { color: #ef4444; font-weight: bold; }
+        #error { color: #ef4444; margin-top: 15px; font-size: 14px; }
+        .actualizacion { text-align: center; color: #64748b; font-size: 11px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- LOGIN -->
+    <div id="login" class="center">
+        <h2>👁️ VISOR REMOTO</h2>
+        <p>La Family Market</p>
+        <input type="password" id="codigo" placeholder="Código de acceso" autocomplete="off">
+        <button onclick="login()">🔓 ENTRAR</button>
+        <p id="error"></p>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dash" class="hidden">
+        <div class="topbar" id="usuario">Cargando...</div>
+
+        <div class="card">
+            <h3>💰 GANANCIAS</h3>
+            <div class="ganancias-grid">
+                <div class="ganancia-mini"><span class="g-label">📅 HOY</span><span class="g-valor" id="gHoy">$0</span></div>
+                <div class="ganancia-mini"><span class="g-label">📆 SEMANA</span><span class="g-valor" id="gSemana">$0</span></div>
+                <div class="ganancia-mini"><span class="g-label">📊 MES</span><span class="g-valor" id="gMes">$0</span></div>
+                <div class="ganancia-mini"><span class="g-label">📈 AÑO</span><span class="g-valor" id="gAno">$0</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🛒 ÚLTIMOS MOVIMIENTOS</h3>
+            <div id="ventas"></div>
+        </div>
+
+        <div class="card">
+            <h3>⚠️ STOCK POR AGOTARSE</h3>
+            <div id="stock"></div>
+        </div>
+
+        <div class="card">
+            <h3>📋 ESTADO GENERAL</h3>
+            <div id="resumen"></div>
+        </div>
+
+        <p class="actualizacion" id="actualizacion"></p>
+        <button class="btn-salir" onclick="salir()">🔒 CERRAR SESIÓN</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://kospieqzqwbjkjljchlu.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_wlulCYK54_osTvkhq5oNuA_PtRS5apR";
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const CODIGOS = {
+        "familia2024": { nombre: "Jefe", rol: "admin" },
+        "visor2024": { nombre: "Hermano", rol: "visor" }
+    };
+
+    function login() {
+        const codigo = document.getElementById("codigo").value.trim();
+        const errorMsg = document.getElementById("error");
+        if (!codigo) return;
+        errorMsg.textContent = "Verificando...";
+
+        if (CODIGOS[codigo]) {
+            const usuario = CODIGOS[codigo];
+            localStorage.setItem("visor_session", JSON.stringify({ ok: true, nombre: usuario.nombre, rol: usuario.rol }));
+            mostrarDashboard(usuario.nombre);
+        } else {
+            errorMsg.textContent = "❌ Código incorrecto";
+        }
+    }
+
+    function mostrarDashboard(nombre) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("dash").classList.remove("hidden");
+        document.getElementById("usuario").textContent = `👤 ${nombre.toUpperCase()}`;
+        cargarTodo();
+    }
+
+    async function cargarTodo() {
+        document.getElementById("actualizacion").textContent = "🔄 Sincronizando...";
+
+        try {
+            const hoy = new Date().toISOString().split("T")[0];
+            const semana = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+            const mes = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+            const ano = new Date().getFullYear() + "-01-01";
+
+            // Ganancias
+            const { data: gHoy } = await db.rpc('calcular_ganancias', { fecha_inicio: hoy, fecha_fin: hoy });
+            document.getElementById('gHoy').textContent = '$' + (gHoy?.[0]?.ganancia_neta || 0).toLocaleString();
+
+            const { data: gSemana } = await db.rpc('calcular_ganancias', { fecha_inicio: semana, fecha_fin: hoy });
+            document.getElementById('gSemana').textContent = '$' + (gSemana?.[0]?.ganancia_neta || 0).toLocaleString();
+
+            const { data: gMes } = await db.rpc('calcular_ganancias', { fecha_inicio: mes, fecha_fin: hoy });
+            document.getElementById('gMes').textContent = '$' + (gMes?.[0]?.ganancia_neta || 0).toLocaleString();
+
+            const { data: gAno } = await db.rpc('calcular_ganancias', { fecha_inicio: ano, fecha_fin: hoy });
+            document.getElementById('gAno').textContent = '$' + (gAno?.[0]?.ganancia_neta || 0).toLocaleString();
+
+            // Últimas ventas
+            const { data: ultimas } = await db.from("venta_familiar")
+                .select("*").order("fecha", { ascending: false }).limit(10);
+            document.getElementById("ventas").innerHTML = ultimas && ultimas.length > 0 ? ultimas.map(v => `
+                <div class="row">
+                    <span>${new Date(v.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })} ${new Date(v.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span class="ok">$${v.total.toLocaleString()}</span>
+                </div>
+            `).join("") : '<p style="color:#94a3b8;text-align:center;">Sin ventas aún</p>';
+
+            // Stock bajo
+            const { data: bajo } = await db.from("productos_familiares")
+                .select("*").lte("stock", 5).eq("agotado", false).order("stock", { ascending: true }).limit(10);
+            document.getElementById("stock").innerHTML = bajo && bajo.length > 0 ? bajo.map(p => `
+                <div class="row"><span>${p.nombre}</span><span class="bad">Quedan ${p.stock}</span></div>
+            `).join("") : '<p style="color:#25D366;text-align:center;">✅ Todo en niveles óptimos</p>';
+
+            // Resumen + Top 5
+            const { count: totalP } = await db.from("productos_familiares").select('*', { count: 'exact', head: true });
+            const { count: activos } = await db.from("productos_familiares").select('*', { count: 'exact', head: true }).eq("agotado", false);
+            const { count: agotados } = await db.from("productos_familiares").select('*', { count: 'exact', head: true }).eq("agotado", true);
+            const { data: top } = await db.from("productos_mas_vendidos").select("*").limit(5);
+
+            document.getElementById("resumen").innerHTML = `
+                <div class="row"><span>📦 Total productos</span><span class="ok">${totalP || 0}</span></div>
+                <div class="row"><span>🟢 Activos</span><span class="ok">${activos || 0}</span></div>
+                <div class="row"><span>🔴 Agotados</span><span class="bad">${agotados || 0}</span></div>
+                <hr style="border-color:#334155;margin:10px 0;">
+                <p style="color:#f1c40f;font-size:12px;margin-bottom:8px;font-weight:bold;">🏆 LO MÁS VENDIDO (MES)</p>
+                ${top && top.length > 0 ? top.map((p, i) => `
+                    <div class="row"><span>#${i+1} ${p.nombre}</span><span class="ok">${p.vendidos_mes} vendidos</span></div>
+                `).join("") : '<p style="color:#94a3b8;text-align:center;">Sin datos aún</p>'}
+                <hr style="border-color:#334155;margin:10px 0;">
+                <div class="row"><span>☁️ Conexión</span><span class="ok">Conectado</span></div>
+            `;
+
+            document.getElementById("actualizacion").textContent = "🕐 Actualizado: " + new Date().toLocaleTimeString();
+        } catch (e) {
+            console.error(e);
+            document.getElementById("actualizacion").textContent = "❌ Error al cargar datos";
+        }
+    }
+
+    function salir() {
+        localStorage.removeItem("visor_session");
+        location.reload();
+    }
+
+    // Auto-login
+    const sesion = localStorage.getItem("visor_session");
+    if (sesion) {
+        try {
+            const data = JSON.parse(sesion);
+            if (data.ok) mostrarDashboard(data.nombre);
+        } catch (e) {
+            localStorage.removeItem("visor_session");
+        }
+    }
+
+    // Refrescar cada 60 segundos
+    setInterval(() => {
+        if (!document.getElementById("dash").classList.contains("hidden")) {
+            cargarTodo();
+        }
+    }, 60000);
+</script>
+</body>
+</html>

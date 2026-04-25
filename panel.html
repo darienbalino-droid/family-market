@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>⚙️ Panel del Jefe - La Family Market</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #0f172a;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        .header {
+            flex-shrink: 0;
+            padding: 16px;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+            text-align: center;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .btn-panel-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #22c55e;
+            text-decoration: none;
+        }
+
+        /* SCROLL PRINCIPAL */
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 40px;
+        }
+
+        /* DASHBOARD */
+        .stats-dashboard h3 {
+            margin-top: 0;
+        }
+
+        .ganancias-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .ganancia-card {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .ganancia-label {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .ganancia-valor {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* BOTONES */
+        .panel-acciones {
+            display: flex;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .panel-acciones button {
+            flex: 1;
+        }
+
+        /* BUSCADOR */
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #1e293b;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            margin-left: 6px;
+        }
+
+        /* TABLA */
+        .tabla-productos-container {
+            overflow-x: auto;
+        }
+
+        .tabla-productos {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .tabla-productos th,
+        .tabla-productos td {
+            padding: 8px;
+            border-bottom: 1px solid #334155;
+            text-align: center;
+        }
+
+        /* FORM */
+        .panel-form {
+            margin-top: 24px;
+        }
+
+        .input-base {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #1e293b;
+            color: white;
+        }
+
+        .btn-guardar {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: #22c55e;
+            color: #0f172a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 400px;
+            background: #1e293b;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            margin: 10px 0;
+            border-radius: 8px;
+            padding: 10px;
+            border: none;
+            background: #0f172a;
+            color: white;
+        }
+
+        .modal-botones {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-botones button {
+            flex: 1;
+        }
+
+        /* PROGRESO */
+        .progresso-rapido {
+            margin: 10px 0;
+        }
+
+        .progresso-barra {
+            height: 6px;
+            background: #22c55e;
+            border-radius: 6px;
+            animation: loading 1s infinite linear;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <h2>⚙️ PANEL DEL JEFE</h2>
+            <p class="subtitle">Gestiona tus productos (Límite: 200)</p>
+            <a href="index.html" class="btn-panel-link">🛒 IR AL POS</a>
+        </div>
+
+        <!-- CONTENIDO -->
+        <div class="panel-content">
+
+            <!-- DASHBOARD -->
+            <div class="stats-dashboard">
+                <h3>📊 MI CENTRO DE MANDO</h3>
+
+                <div id="alertasStock" class="alertas-stock">
+                    <p style="color:#94a3b8;">Cargando alertas...</p>
+                </div>
+
+                <div class="ganancias-grid">
+                    <div class="ganancia-card">
+                        <span class="ganancia-label">💰 HOY</span>
+                        <span class="ganancia-valor" id="gananciaHoy">$0</span>
+                    </div>
+                    <div class="ganancia-card">
+                        <span class="ganancia-label">📅 SEMANA</span>
+                        <span class="ganancia-valor" id="gananciaSemana">$0</span>
+                    </div>
+                    <div class="ganancia-card">
+                        <span class="ganancia-label">📆 MES</span>
+                        <span class="ganancia-valor" id="gananciaMes">$0</span>
+                    </div>
+                </div>
+
+                <div class="top-productos">
+                    <h4>🏆 LO MÁS VENDIDO (MES)</h4>
+                    <div id="topProductosList">
+                        <p style="color:#94a3b8;">Cargando ranking...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCIONES -->
+            <div class="panel-acciones">
+                <button class="btn-panel-oro" id="btnModoRapido">📋 PEGAR LISTA RÁPIDA</button>
+                <button class="btn-panel-rojo" id="btnBorrarTodo">🗑️ BORRAR TODO</button>
+            </div>
+
+            <!-- BUSCADOR -->
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="buscadorPanel" placeholder="Buscar producto..." oninput="filtrarProductosPanel()">
+            </div>
+
+            <div class="panel-contador">
+                <span id="contadorProductos">0 / 200 productos</span>
+            </div>
+
+            <!-- TABLA -->
+            <div class="tabla-productos-container">
+                <table class="tabla-productos" id="tablaProductos">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>AGOT</th>
+                            <th>🗑️</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaProductosBody"></tbody>
+                </table>
+
+                <div id="paginacionPanel" class="paginacion-container"></div>
+            </div>
+
+            <!-- FORM -->
+            <div class="panel-form">
+                <h3>➕ NUEVO PRODUCTO</h3>
+
+                <input type="text" id="nuevoNombre" placeholder="Nombre del producto" class="input-base">
+                <input type="number" id="nuevoPrecio" placeholder="Precio (CUP)" class="input-base">
+                <input type="number" id="nuevoStock" placeholder="Stock inicial" class="input-base">
+
+                <button class="btn-guardar" id="btnGuardarProducto">
+                    💾 GUARDAR PRODUCTO
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modoRapidoModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>📋 Pega tu lista de productos</h3>
+
+            <p>
+                Formato: Nombre + precio + stock<br>
+                Ej: Aceite 900ml 1350 15
+            </p>
+
+            <textarea id="listaRapida" rows="8"></textarea>
+
+            <div id="progressoRapido" class="progresso-rapido hidden">
+                <div class="progresso-barra"></div>
+                <span id="progressoTexto">Procesando...</span>
+            </div>
+
+            <div class="modal-botones">
+                <button class="btn-panel-verde" id="btnProcesarRapido">✅ PROCESAR</button>
+                <button class="btn-panel-rojo" id="btnCancelarRapido">❌ CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
