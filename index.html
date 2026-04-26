@@ -4,152 +4,272 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>🧾 La Family Market - POS</title>
-
     <link rel="stylesheet" href="style.css">
-
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+            height: 100%; overflow: hidden;
             font-family: system-ui, -apple-system, sans-serif;
-            background: #0f172a;
+            background: #0f172a; color: #e2e8f0;
         }
-
-        .app-container {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* HEADER */
+        .app-container { height: 100%; display: flex; flex-direction: column; }
         .header {
-            flex-shrink: 0;
-            padding: 16px;
-            background: #0f172a;
-            border-bottom: 1px solid #334155;
-            text-align: center;
+            flex-shrink: 0; padding: 16px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-bottom: 1px solid #334155; text-align: center; z-index: 10;
         }
-
-        .header h2 {
-            margin: 0;
-            font-size: 20px;
-        }
-
-        .subtitle {
-            font-size: 13px;
-            opacity: 0.7;
-            margin-top: 4px;
-        }
-
+        .header h2 { margin: 0; font-size: 20px; color: #f1c40f; letter-spacing: -0.5px; }
+        .subtitle { font-size: 13px; color: #94a3b8; margin-top: 4px; }
         .btn-panel-link {
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 13px;
-            color: #22c55e;
-            text-decoration: none;
+            display: inline-block; margin-top: 8px; font-size: 13px;
+            color: #22c55e; text-decoration: none;
+            background: rgba(34, 197, 94, 0.1); padding: 6px 14px;
+            border-radius: 20px; transition: all 0.2s;
         }
+        .btn-panel-link:hover { background: rgba(34, 197, 94, 0.2); }
+        .contenido-scroll { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 120px; }
 
-        /* CONTENIDO SCROLL */
-        .contenido-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            padding-bottom: 120px; /* espacio para flotante + tab */
+        /* BUSCADOR COMPACTO Y ELEGANTE */
+        .search-box {
+            background: #1e293b; border-radius: 50px; padding: 4px;
+            display: flex; align-items: center; margin-bottom: 16px;
+            border: 2px solid #334155; transition: all 0.3s; gap: 4px;
         }
+        .search-box:focus-within {
+            border-color: #f1c40f;
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.15);
+        }
+        .search-box .search-icon { font-size: 15px; padding-left: 12px; opacity: 0.5; flex-shrink: 0; }
+        .search-box input {
+            flex: 1; background: transparent; border: none;
+            color: white; padding: 12px 4px; outline: none;
+            font-size: 14px; min-width: 0;
+        }
+        .search-box input::placeholder { color: #64748b; font-size: 13px; }
+
+        /* BOTÓN AJUSTES DENTRO DEL BUSCADOR */
+        .btn-ajustes {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #334155; border: none; color: #f1c40f;
+            font-size: 16px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: all 0.3s; flex-shrink: 0; margin-right: 3px;
+        }
+        .btn-ajustes:hover { background: #475569; transform: rotate(45deg); }
+        .btn-ajustes:active { transform: scale(0.85) rotate(90deg); }
 
         /* ACCIONES FLOTANTES */
         .acciones-flotantes {
-            position: fixed;
-            bottom: 70px;
-            left: 16px;
-            right: 16px;
-            background: #22c55e;
-            padding: 12px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            z-index: 20;
+            position: fixed; bottom: 70px; left: 16px; right: 16px;
+            background: #22c55e; padding: 14px 18px; border-radius: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 20;
+            transition: transform 0.3s, opacity 0.3s;
         }
-
         .acciones-flotantes.hidden {
-            display: none;
+            transform: translateY(20px); opacity: 0; pointer-events: none;
         }
-
+        .acciones-flotantes span { font-size: 18px; font-weight: 700; color: #0f172a; }
         .acciones-flotantes button {
-            background: #0f172a;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
+            background: #0f172a; color: #22c55e; border: none;
+            padding: 10px 18px; border-radius: 10px; font-weight: 700;
+            font-size: 14px; cursor: pointer; transition: all 0.2s;
         }
+        .acciones-flotantes button:active { transform: scale(0.95); }
 
         /* TAB BAR */
         .tab-bar {
-            flex-shrink: 0;
-            display: flex;
-            background: #0f172a;
-            padding: 8px;
-            gap: 6px;
-            border-top: 1px solid #334155;
+            flex-shrink: 0; display: flex; background: #0f172a;
+            padding: 8px 12px; gap: 8px; border-top: 1px solid #334155;
         }
-
         .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background: #1e293b;
-            color: white;
-            cursor: pointer;
-            font-size: 13px;
+            flex: 1; padding: 12px; border: none; border-radius: 10px;
+            background: #1e293b; color: #94a3b8; cursor: pointer;
+            font-size: 13px; font-weight: 600; transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #f1c40f; color: #0f172a; font-weight: 700;
+            box-shadow: 0 4px 12px rgba(241, 196, 15, 0.3);
         }
 
-        .tab-btn.active {
-            background: #22c55e;
-            color: #0f172a;
-            font-weight: bold;
+        /* MODAL AJUSTES */
+        .modal-ajustes {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 3000; backdrop-filter: blur(4px);
         }
+        .modal-ajustes.hidden { display: none; }
+        .modal-ajustes-content {
+            background: linear-gradient(160deg, #1e293b, #162032);
+            border-radius: 24px; padding: 24px; width: 90%;
+            max-width: 320px; border: 2px solid #f1c40f;
+            text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .modal-ajustes-content h3 {
+            color: #f1c40f; margin: 0 0 20px 0; font-size: 18px;
+        }
+        .ajustes-opciones { display: flex; flex-direction: column; gap: 10px; }
+        .btn-tema {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px; border-radius: 14px;
+            border: 2px solid #334155; background: #1e293b;
+            color: white; cursor: pointer; font-size: 14px;
+            font-weight: 600; transition: all 0.2s;
+        }
+        .btn-tema:hover { border-color: #f1c40f; }
+        .btn-tema.activo {
+            border-color: #f1c40f !important;
+            background: rgba(241, 196, 15, 0.15) !important;
+        }
+        .btn-tema .tema-check {
+            color: #f1c40f; font-weight: bold; font-size: 18px;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .btn-tema.activo .tema-check { opacity: 1; }
+        .btn-cerrar-ajustes {
+            margin-top: 16px; padding: 12px 24px; border-radius: 30px;
+            border: none; background: #334155; color: white;
+            cursor: pointer; font-weight: 600; width: 100%;
+            font-size: 14px;
+        }
+
+        /* MODO CLARO */
+        body.modo-claro { background: #f8fafc !important; color: #1a1a2e !important; }
+        body.modo-claro .app-container { background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%) !important; }
+        body.modo-claro .header { background: #ffffff !important; border-bottom-color: #e2e8f0 !important; }
+        body.modo-claro .header h2 { color: #16a34a !important; }
+        body.modo-claro .search-box { background: #ffffff !important; border-color: #e2e8f0 !important; }
+        body.modo-claro .search-box input { color: #1a1a2e !important; }
+        body.modo-claro .tab-bar { background: #ffffff !important; border-top-color: #e2e8f0 !important; }
+        body.modo-claro .tab-btn { background: #f1f5f9 !important; color: #64748b !important; }
+        body.modo-claro .tab-btn.active { background: #f1c40f !important; color: #1a1a2e !important; }
+        body.modo-claro .btn-ajustes { background: #e2e8f0 !important; color: #1a1a2e !important; }
+        body.modo-claro .modal-ajustes-content { background: #ffffff !important; }
+        body.modo-claro .btn-tema { background: #f1f5f9 !important; color: #1a1a2e !important; }
+        body.modo-claro .btn-cerrar-ajustes { background: #e2e8f0 !important; color: #1a1a2e !important; }
     </style>
 </head>
-
 <body>
     <div class="app-container">
-
-        <!-- HEADER -->
         <div class="header">
             <h2>🧾 LA FAMILY MARKET</h2>
             <p class="subtitle">Punto de Venta PRO</p>
             <a href="panel.html" class="btn-panel-link">⚙️ PANEL DEL JEFE</a>
         </div>
 
-        <!-- CONTENIDO DINÁMICO -->
         <div id="contenidoDinamico" class="contenido-scroll"></div>
 
-        <!-- ACCIONES -->
         <div id="accionesFlotantes" class="acciones-flotantes hidden">
             <span id="totalSeleccionado">$0.00</span>
             <button onclick="verCarrito()">REVISAR VENTA 🛒</button>
         </div>
 
-        <!-- TAB BAR -->
         <div class="tab-bar">
-            <button class="tab-btn active" onclick="cambiarTab('vender', this)">🛒 Vender</button>
-            <button class="tab-btn" onclick="cambiarTab('caja', this)">💰 Caja</button>
-            <button class="tab-btn" onclick="cambiarTab('informes', this)">📊 Informes</button>
+            <button class="tab-btn active" onclick="cambiarTab('vender')">🛒 Vender</button>
+            <button class="tab-btn" onclick="cambiarTab('caja')">💰 Caja</button>
+            <button class="tab-btn" onclick="cambiarTab('informes')">📊 Informes</button>
         </div>
 
+        <!-- MODAL DE AJUSTES -->
+        <div id="modalAjustes" class="modal-ajustes hidden">
+            <div class="modal-ajustes-content">
+                <h3>⚙️ Ajustes de Tema</h3>
+                <div class="ajustes-opciones">
+                    <button class="btn-tema activo" id="btnTemaOscuro" onclick="cambiarTema('oscuro')">
+                        <span>🌙 Modo Oscuro</span>
+                        <span class="tema-check">✓</span>
+                    </button>
+                    <button class="btn-tema" id="btnTemaClaro" onclick="cambiarTema('claro')">
+                        <span>☀️ Modo Claro</span>
+                        <span class="tema-check">✓</span>
+                    </button>
+                </div>
+                <button class="btn-cerrar-ajustes" onclick="cerrarAjustes()">Cerrar</button>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
+
+    <script>
+    // ========== CORRECCIÓN DEL BUSCADOR EN EL POS ==========
+    // Interceptamos renderTab para agregar el botón ⚙️ al buscador
+    const renderTabOriginal = renderTab;
+    renderTab = function(tab) {
+        renderTabOriginal(tab);
+        
+        // Agregar botón de ajustes al buscador si estamos en la pestaña vender
+        if (tab === 'vender') {
+            setTimeout(() => {
+                const searchBox = document.querySelector('#contenidoDinamico .search-box');
+                if (searchBox && !searchBox.querySelector('.btn-ajustes')) {
+                    // Crear el botón de ajustes
+                    const btnAjustes = document.createElement('button');
+                    btnAjustes.className = 'btn-ajustes';
+                    btnAjustes.innerHTML = '⚙️';
+                    btnAjustes.title = 'Ajustes';
+                    btnAjustes.onclick = abrirAjustes;
+                    
+                    // Agregar ícono de búsqueda si no existe
+                    if (!searchBox.querySelector('.search-icon')) {
+                        const icono = document.createElement('span');
+                        icono.className = 'search-icon';
+                        icono.textContent = '🔍';
+                        searchBox.prepend(icono);
+                    }
+                    
+                    searchBox.appendChild(btnAjustes);
+                }
+            }, 100);
+        }
+    };
+
+    // ========== AJUSTES DE TEMA ==========
+    function abrirAjustes() {
+        document.getElementById('modalAjustes').classList.remove('hidden');
+        actualizarBotonesTema();
+    }
+
+    function cerrarAjustes() {
+        document.getElementById('modalAjustes').classList.add('hidden');
+    }
+
+    function cambiarTema(tema) {
+        if (tema === 'claro') {
+            document.body.classList.add('modo-claro');
+            localStorage.setItem('family_tema', 'claro');
+        } else {
+            document.body.classList.remove('modo-claro');
+            localStorage.setItem('family_tema', 'oscuro');
+        }
+        actualizarBotonesTema();
+        setTimeout(cerrarAjustes, 300);
+    }
+
+    function actualizarBotonesTema() {
+        const temaActual = localStorage.getItem('family_tema') || 'oscuro';
+        document.getElementById('btnTemaOscuro').classList.toggle('activo', temaActual === 'oscuro');
+        document.getElementById('btnTemaClaro').classList.toggle('activo', temaActual === 'claro');
+    }
+
+    // Cargar tema guardado
+    (function() {
+        const temaGuardado = localStorage.getItem('family_tema');
+        if (temaGuardado === 'claro') {
+            document.body.classList.add('modo-claro');
+        }
+    })();
+
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarAjustes();
+    });
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modalAjustes').addEventListener('click', function(e) {
+        if (e.target === this) cerrarAjustes();
+    });
+    </script>
 </body>
 </html>
