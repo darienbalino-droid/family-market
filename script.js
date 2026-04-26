@@ -1,6 +1,6 @@
-// ========== CONFIG ==========
-const SUPABASE_URL = "https://kospieqzqwbjkjljchlu.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_wlulCYK54_osTvkhq5oNuA_PtRS5apR";
+// ========== CONFIGURACIÓN DE SUPABASE (CREDENCIALES CORREGIDAS) ==========
+const SUPABASE_URL = "https://xkqejmzsahmdnhnpctem.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcWVqbXpzYWhtZG5obnBjdGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTM2MjgsImV4cCI6MjA5MjM2OTYyOH0.RKKlgWqyst5XIrDwhMx8yXcBd4K90BbxIarsZlCP07w";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ========== ESTADO CENTRAL ==========
@@ -16,36 +16,56 @@ const App = {
 
 const LIMITE = 200;
 
-// ========== UTIL ==========
+// ========== UTILIDADES ==========
 function guardarLocal() {
     localStorage.setItem('family_articulos', JSON.stringify(App.articulos));
     localStorage.setItem('family_ventas', JSON.stringify(App.ventas));
     localStorage.setItem('family_pendientes', JSON.stringify(App.pendientes));
 }
 
-// ========== SYNC ==========
+// ========== SYNCRONIZACIÓN CON SUPABASE ==========
 async function sync() {
     if (!navigator.onLine || App.pendientes.length === 0) return;
+    
+    console.log('🔄 Sincronizando', App.pendientes.length, 'cambios pendientes...');
+    
     const copia = [...App.pendientes];
+    
     for (const cambio of copia) {
         try {
             if (cambio.tipo === "insert") {
-                const { error } = await db.from("productos_familiares").insert(cambio.datos);
-                if (!error) App.pendientes = App.pendientes.filter(p => p !== cambio);
+                const { error } = await db.from("productos").insert(cambio.datos);
+                if (!error) {
+                    App.pendientes = App.pendientes.filter(p => p !== cambio);
+                    console.log('✅ Insertado:', cambio.datos.nombre);
+                } else {
+                    console.error('❌ Error insert:', error);
+                }
             }
             if (cambio.tipo === "update") {
-                const { error } = await db.from("productos_familiares").update(cambio.datos).eq("id", cambio.id);
-                if (!error) App.pendientes = App.pendientes.filter(p => p !== cambio);
+                const { error } = await db.from("productos").update(cambio.datos).eq("id", cambio.id);
+                if (!error) {
+                    App.pendientes = App.pendientes.filter(p => p !== cambio);
+                    console.log('✅ Actualizado ID:', cambio.id);
+                } else {
+                    console.error('❌ Error update:', error);
+                }
             }
             if (cambio.tipo === "delete") {
-                const { error } = await db.from("productos_familiares").delete().eq("id", cambio.id);
-                if (!error) App.pendientes = App.pendientes.filter(p => p !== cambio);
+                const { error } = await db.from("productos").delete().eq("id", cambio.id);
+                if (!error) {
+                    App.pendientes = App.pendientes.filter(p => p !== cambio);
+                    console.log('✅ Eliminado ID:', cambio.id);
+                } else {
+                    console.error('❌ Error delete:', error);
+                }
             }
-        } catch (err) {}
+        } catch (err) {
+            console.error('❌ Error sync:', err);
+        }
     }
-    guardarLocal();
     
-    // 🔥 SINCRONIZAR VENTAS PENDIENTES A LA NUBE
+    guardarLocal();
     await sincronizarVentasPendientes();
 }
 
@@ -54,45 +74,83 @@ async function sincronizarVentasPendientes() {
     const ventasSync = JSON.parse(localStorage.getItem('family_ventas_sync') || '[]');
     if (ventasSync.length === 0) return;
     
+    console.log('💰 Sincronizando', ventasSync.length, 'ventas pendientes...');
+    
     const copia = [...ventasSync];
+    
     for (const venta of copia) {
         try {
-            const { error } = await db.from("venta_familiar").insert({
+            const { error } = await db.from("ventas").insert({
+                fecha: venta.fecha,
                 total: venta.total,
-                items: venta.items || [],
-                created_at: venta.fecha
+                items: venta.items || []
             });
+            
             if (!error) {
                 const idx = ventasSync.indexOf(venta);
                 if (idx >= 0) ventasSync.splice(idx, 1);
+                console.log('✅ Venta sincronizada: $' + venta.total);
+            } else {
+                console.error('❌ Error venta:', error);
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error('❌ Error sync venta:', e);
+        }
     }
+    
     localStorage.setItem('family_ventas_sync', JSON.stringify(ventasSync));
 }
 
 // ========== CARGA INICIAL ==========
 async function init() {
-    const local = localStorage.getItem("family_articulos");
-    if (local) {
-        App.articulos = JSON.parse(local);
-    } else if (navigator.onLine) {
-        const { data } = await db.from("productos_familiares").select("*");
-        App.articulos = data || [];
+    console.log('🧾 La Family Market - Iniciando...');
+    
+    // Intentar cargar desde Supabase primero
+    if (navigator.onLine) {
+        const { data, error } = await db.from("productos").select("*").order('id', { ascending: true });
+        if (data && !error) {
+            App.articulos = data;
+            guardarLocal();
+            console.log('✅ Cargados', data.length, 'productos desde Supabase');
+        } else {
+            console.log('⚠️ Usando datos locales');
+            const local = localStorage.getItem("family_articulos");
+            if (local) App.articulos = JSON.parse(local);
+        }
+    } else {
+        const local = localStorage.getItem("family_articulos");
+        if (local) App.articulos = JSON.parse(local);
+    }
+    
+    // Si no hay nada, crear productos de ejemplo
+    if (App.articulos.length === 0) {
+        App.articulos = [
+            { id: 1, nombre: "Arroz 5 kg", precio: 1200, stock: 25, agotado: false, stock_minimo: 5, costo: 0 },
+            { id: 2, nombre: "Frijoles Negros 1 kg", precio: 850, stock: 30, agotado: false, stock_minimo: 5, costo: 0 },
+            { id: 3, nombre: "Aceite Vegetal 900 ml", precio: 1350, stock: 20, agotado: false, stock_minimo: 5, costo: 0 },
+            { id: 4, nombre: "Azúcar Blanca 1 kg", precio: 450, stock: 40, agotado: false, stock_minimo: 5, costo: 0 },
+            { id: 5, nombre: "Sal de Mesa 1 kg", precio: 180, stock: 50, agotado: false, stock_minimo: 5, costo: 0 }
+        ];
         guardarLocal();
     }
 
     if (App.isPanel) {
         renderPanel();
+        // Disparar actualización de stock panel después de cargar
+        setTimeout(() => {
+            if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
+        }, 500);
     } else {
         renderTab("vender");
     }
+    
+    console.log('✅ App lista. Productos:', App.articulos.length);
 }
 
 // ========== POS ==========
 window.cambiarTab = (tab, btn) => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+    if (btn) btn.classList.add("active");
     renderTab(tab);
 };
 
@@ -147,7 +205,7 @@ function renderTab(tab) {
     }
 }
 
-// ========== RENDER PRODUCTOS CON #1, #2, #3 Y BADGE STOCK BAJO ==========
+// ========== RENDER PRODUCTOS CON NUMERACIÓN Y BADGE STOCK BAJO ==========
 function renderArticulos(filtro = "") {
     const grid = document.getElementById("grid");
     if (!grid) return;
@@ -301,19 +359,24 @@ window.cancelarCheckout = () => {
     updateFloat();
 };
 
-// ========== FINALIZAR VENTA (CON SINCRONIZACIÓN A LA NUBE) ==========
+// ========== FINALIZAR VENTA (CON SINCRONIZACIÓN A SUPABASE) ==========
 window.finalizarVenta = () => {
     if (App.carrito.length === 0) return;
 
     const itemsVenta = App.carrito.map(i => ({
+        id: i.id,
         nombre: i.nombre,
         precio: i.precio,
         cantidad: i.cantidad
     }));
 
+    // Actualizar stock local
     App.carrito.forEach(i => {
         const art = App.articulos.find(a => a.id == i.id);
-        if (art) { art.stock -= i.cantidad; App.pendientes.push({ tipo: "update", id: art.id, datos: { ...art } }); }
+        if (art) { 
+            art.stock -= i.cantidad; 
+            App.pendientes.push({ tipo: "update", id: art.id, datos: { ...art } }); 
+        }
     });
 
     const total = App.carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
@@ -327,24 +390,28 @@ window.finalizarVenta = () => {
     historialGlobal.push(venta);
     localStorage.setItem('family_historial_global', JSON.stringify(historialGlobal));
 
-    // 🔥 GUARDAR PARA SINCRONIZAR CON LA NUBE
+    // Guardar para sincronizar con Supabase
     const ventasSync = JSON.parse(localStorage.getItem('family_ventas_sync') || '[]');
     ventasSync.push(venta);
     localStorage.setItem('family_ventas_sync', JSON.stringify(ventasSync));
 
     // Intentar subir a Supabase AHORA
     if (navigator.onLine) {
-        db.from("venta_familiar").insert({
+        db.from("ventas").insert({
+            fecha: venta.fecha,
             total: total,
-            items: itemsVenta,
-            created_at: venta.fecha
-        }).then(() => {
-            // Quitar de pendientes si se subió bien
-            const ventasSync = JSON.parse(localStorage.getItem('family_ventas_sync') || '[]');
-            const idx = ventasSync.findIndex(v => v.fecha === venta.fecha);
-            if (idx >= 0) ventasSync.splice(idx, 1);
-            localStorage.setItem('family_ventas_sync', JSON.stringify(ventasSync));
-        }).catch(() => {});
+            items: itemsVenta
+        }).then(({ error }) => {
+            if (!error) {
+                const vs = JSON.parse(localStorage.getItem('family_ventas_sync') || '[]');
+                const idx = vs.findIndex(v => v.fecha === venta.fecha);
+                if (idx >= 0) vs.splice(idx, 1);
+                localStorage.setItem('family_ventas_sync', JSON.stringify(vs));
+                console.log('✅ Venta subida a Supabase');
+            } else {
+                console.error('❌ Error subir venta:', error);
+            }
+        }).catch(err => console.error('❌ Error:', err));
     }
 
     alert(`✅ Venta registrada! Total: $${total.toLocaleString()}`);
@@ -353,19 +420,34 @@ window.finalizarVenta = () => {
     if (navigator.onLine) sync();
 };
 
+// ========== CERRAR CAJA ==========
 window.cerrarCaja = () => {
     if (App.ventas.length === 0) { alert("Sin ventas hoy"); return; }
+    
     const total = App.ventas.reduce((s, v) => s + v.total, 0);
     const cantidad = App.ventas.length;
-    App.ventas = [];
-    guardarLocal();
-    const cierres = JSON.parse(localStorage.getItem('family_cierres') || '[]');
     const hoy = new Date().toISOString().split("T")[0];
+    
+    // Guardar en localStorage
+    const cierres = JSON.parse(localStorage.getItem('family_cierres') || '[]');
     cierres.push({ fecha: hoy, total, ventas: cantidad });
     localStorage.setItem('family_cierres', JSON.stringify(cierres));
+    
+    // Guardar en Supabase
+    if (navigator.onLine) {
+        db.from("cierres").upsert({ 
+            fecha: hoy, 
+            total, 
+            cantidad_ventas: cantidad 
+        }).then(() => {
+            console.log('✅ Cierre guardado en Supabase');
+        }).catch(err => console.error('❌ Error cierre:', err));
+    }
+    
+    App.ventas = [];
+    guardarLocal();
     alert(`🔒 Caja cerrada. Total: $${total.toLocaleString()}`);
     renderTab("caja");
-    if (navigator.onLine) db.from("cierres_caja").upsert({ fecha: hoy, total, cantidad_ventas: cantidad }).catch(() => {});
 };
 
 // ========== INFORMES ==========
@@ -415,22 +497,24 @@ async function cargarInformes() {
 
     if (navigator.onLine) {
         try {
-            const { data: ventasDB } = await db.from("venta_familiar").select("*").order("created_at", { ascending: false }).limit(10);
+            const { data: ventasDB } = await db.from("ventas").select("*").order("fecha", { ascending: false }).limit(10);
             if (ventasDB && ventasDB.length > 0) {
                 html += `<div class="informe-card"><h3 class="informe-titulo">☁️ REGISTROS EN LA NUBE</h3>`;
                 ventasDB.forEach(v => {
-                    const f = new Date(v.created_at || v.fecha);
+                    const f = new Date(v.fecha || v.created_at);
                     html += `<div class="informe-row"><span>${f.toLocaleDateString()} ${f.toLocaleTimeString()}</span><span style="color:#25D366;font-weight:bold;">$${v.total.toLocaleString()}</span></div>`;
                 });
                 html += `</div>`;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error('Error cargando ventas de Supabase:', e);
+        }
     }
 
     cont.innerHTML = html;
 }
 
-// ========== PANEL ==========
+// ========== PANEL DEL JEFE ==========
 function renderPanel() {
     document.getElementById("btnModoRapido")?.addEventListener("click", abrirModoRapido);
     document.getElementById("btnProcesarRapido")?.addEventListener("click", procesarListaRapida);
@@ -442,6 +526,11 @@ function renderPanel() {
     renderTablaPanel();
     actualizarContador();
     cargarStats();
+    
+    // Actualizar stock panel después de renderizar
+    setTimeout(() => {
+        if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
+    }, 1000);
 }
 
 function filtrarPanel() {
@@ -453,39 +542,63 @@ function renderTablaPanel() {
     const tbody = document.getElementById("tablaProductosBody");
     if (!tbody) return;
     const lista = App.filtroPanel ? App.articulos.filter(a => a.nombre.toLowerCase().includes(App.filtroPanel)) : App.articulos;
-    tbody.innerHTML = lista.map((p, i) => `
-        <tr class="${p.agotado ? 'fila-agotada' : ''}">
+    tbody.innerHTML = lista.map((p, i) => {
+        const stockClass = (p.stock || 0) <= 5 && (p.stock || 0) > 0 && !p.agotado ? 'fila-stock-bajo' : '';
+        const badgeBajo = (p.stock || 0) <= 5 && (p.stock || 0) > 0 && !p.agotado ? 
+            `<span class="badge-stock-bajo">¡${p.stock}!</span>` : '';
+        return `
+        <tr class="${p.agotado ? 'fila-agotada' : ''} ${stockClass}">
             <td>${i + 1}</td>
-            <td><input type="text" value="${p.nombre}" onchange="updateCampo(${p.id},'nombre',this.value)" style="width:100%;background:#1e293b;border:1px solid #334155;border-radius:6px;color:white;padding:6px;text-align:center;" class="${p.agotado?'texto-tachado':''}"></td>
-            <td><input type="number" value="${p.precio}" onchange="updateCampo(${p.id},'precio',parseInt(this.value))" style="width:80px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:white;padding:6px;text-align:center;"></td>
-            <td><input type="number" value="${p.stock}" onchange="updateCampo(${p.id},'stock',parseInt(this.value))" style="width:60px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:white;padding:6px;text-align:center;"></td>
+            <td><input type="text" value="${p.nombre}" onchange="updateCampo(${p.id},'nombre',this.value)" class="${p.agotado?'texto-tachado':''}">${badgeBajo}</td>
+            <td><input type="number" value="${p.precio}" onchange="updateCampo(${p.id},'precio',parseInt(this.value))"></td>
+            <td><input type="number" value="${p.stock}" onchange="updateCampo(${p.id},'stock',parseInt(this.value))"></td>
             <td><input type="checkbox" ${p.agotado?'checked':''} onchange="toggleAgotado(${p.id},this.checked)"></td>
-            <td><button onclick="eliminarProducto(${p.id})" style="background:#ef4444;border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;">🗑️</button></td>
-        </tr>`).join("");
+            <td><button onclick="eliminarProducto(${p.id})">🗑️</button></td>
+        </tr>`;
+    }).join("");
     actualizarContador();
+    
+    // Actualizar panel de stock después de renderizar tabla
+    setTimeout(() => {
+        if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
+    }, 300);
 }
 
 window.updateCampo = (id, campo, valor) => {
     const p = App.articulos.find(a => a.id == id);
-    if (p) { p[campo] = valor; App.pendientes.push({ tipo: "update", id, datos: { ...p } }); guardarLocal(); sync(); }
+    if (p) { 
+        p[campo] = valor; 
+        App.pendientes.push({ tipo: "update", id, datos: { ...p } }); 
+        guardarLocal(); 
+        sync(); 
+        if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
+    }
 };
 
 window.toggleAgotado = (id, checked) => {
     const p = App.articulos.find(a => a.id == id);
-    if (p) { p.agotado = checked; App.pendientes.push({ tipo: "update", id, datos: { ...p } }); guardarLocal(); renderTablaPanel(); sync(); }
+    if (p) { 
+        p.agotado = checked; 
+        App.pendientes.push({ tipo: "update", id, datos: { ...p } }); 
+        guardarLocal(); 
+        renderTablaPanel(); 
+        sync(); 
+        if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
+    }
 };
 
 window.eliminarProducto = (id) => {
-    if (!confirm("¿Eliminar?")) return;
+    if (!confirm("¿Eliminar este producto?")) return;
     App.articulos = App.articulos.filter(a => a.id != id);
     App.pendientes.push({ tipo: "delete", id });
     guardarLocal();
     renderTablaPanel();
     sync();
+    if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
 };
 
 window.agregarProducto = () => {
-    if (App.articulos.length >= LIMITE) { alert("Límite alcanzado"); return; }
+    if (App.articulos.length >= LIMITE) { alert("Límite alcanzado (200 productos)"); return; }
     const n = document.getElementById("nuevoNombre")?.value?.trim();
     const p = parseInt(document.getElementById("nuevoPrecio")?.value);
     const s = parseInt(document.getElementById("nuevoStock")?.value);
@@ -499,6 +612,7 @@ window.agregarProducto = () => {
     document.getElementById("nuevoStock").value = "";
     renderTablaPanel();
     sync();
+    if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
 };
 
 function actualizarContador() {
@@ -547,18 +661,21 @@ function procesarListaRapida() {
     alert(`✅ ${agregados} agregados. ${duplicados > 0 ? '⚠️ ' + duplicados + ' duplicados.' : ''}`);
     cerrarModoRapido();
     sync();
+    if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
 }
 
 function borrarTodo() {
-    if (!confirm("¿Borrar TODO?")) return;
+    if (!confirm("¿Borrar TODOS los productos? Esto no se puede deshacer.")) return;
     App.articulos = [];
     App.pendientes = [];
     guardarLocal();
     renderTablaPanel();
     cargarStats();
+    sync();
+    if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
 }
 
-// ========== ESTADÍSTICAS ==========
+// ========== ESTADÍSTICAS DEL PANEL ==========
 async function cargarStats() {
     if (!navigator.onLine) return;
     try {
@@ -588,9 +705,17 @@ async function cargarStats() {
                 '<strong>⚠️ STOCK BAJO:</strong>' + stockBajo.slice(0, 5).map(a => `<div class="alerta-item"><span>${a.nombre}</span><span style="color:#ef4444;">Quedan ${a.stock}</span></div>`).join("") :
                 '<p style="color:#25D366;">✅ Todo en niveles óptimos</p>';
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error('Error cargando estadísticas:', e); 
+    }
 }
 
-// ========== INIT ==========
+// ========== INICIALIZACIÓN ==========
 document.addEventListener("DOMContentLoaded", init);
-setInterval(sync, 30000);
+
+// Sincronización automática cada 30 segundos
+setInterval(() => {
+    if (navigator.onLine) sync();
+}, 30000);
+
+console.log('📦 script.js cargado correctamente');
