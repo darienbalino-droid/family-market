@@ -1,209 +1,509 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>👁️ Visor Remoto - La Family Market</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0f1a;
-            color: white;
-            min-height: 100vh;
-        }
-        .container { max-width: 500px; margin: auto; min-height: 100vh; background: linear-gradient(180deg, #0f172a 0%, #1a2538 100%); padding-bottom: 40px; }
-        .center { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; padding: 20px; text-align: center; }
-        .center h2 { color: #f1c40f; font-size: 28px; margin-bottom: 8px; }
-        .center p { color: #94a3b8; margin-bottom: 20px; }
-        input { width: 100%; max-width: 300px; padding: 16px; border-radius: 16px; border: 2px solid #334155; background: #1e293b; color: white; font-size: 18px; text-align: center; margin: 12px 0; outline: none; }
-        input:focus { border-color: #f1c40f; }
-        button { width: 100%; max-width: 300px; padding: 16px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f1c40f, #e0b800); font-weight: 800; color: #0f172a; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b8960c; }
-        button:active { transform: scale(0.97); }
-        .btn-salir { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; margin: 20px auto; display: block; box-shadow: 0 4px 0 #991b1b; }
-        .hidden { display: none !important; }
-        .topbar { text-align: center; padding: 20px; background: #1e293b; border-bottom: 2px solid #f1c40f; color: #f1c40f; font-size: 16px; font-weight: bold; }
-        .card { background: linear-gradient(160deg, #1a2538, #0f172a); margin: 16px; padding: 20px; border-radius: 24px; border: 1px solid #334155; box-shadow: 0 4px 0 #0a0f1a; }
-        .card h3 { color: #f1c40f; font-size: 14px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .ganancias-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .ganancia-mini { background: linear-gradient(180deg, #1e293b, #162032); border-radius: 18px; padding: 15px; text-align: center; border: 1px solid #334155; box-shadow: 0 3px 0 #0a0f1a; }
-        .g-label { color: #94a3b8; font-size: 10px; display: block; margin-bottom: 5px; text-transform: uppercase; }
-        .g-valor { color: #25D366; font-weight: 800; font-size: 20px; }
-        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
-        .row:last-child { border-bottom: none; }
-        .ok { color: #25D366; font-weight: bold; }
-        .bad { color: #ef4444; font-weight: bold; }
-        #error { color: #ef4444; margin-top: 15px; font-size: 14px; }
-        .actualizacion { text-align: center; color: #64748b; font-size: 11px; padding: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👁️ FAMILY MARKET - Visor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root {
+  --gold: #f1c40f;
+  --green: #25D366;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --bg: #0a0f1a;
+  --card: #111827;
+  --border: #1f2937;
+  --text: #94a3b8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: white;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 520px;
+  margin: auto;
+  padding-bottom: 40px;
+}
+
+/* LOGIN */
+.login-screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(180deg, #0f172a 0%, #0a0f1a 100%);
+}
+
+.logo { font-size: 48px; margin-bottom: 10px; animation: pulse 2s infinite; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.login-screen h1 { color: var(--gold); font-size: 28px; margin-bottom: 5px; letter-spacing: -1px; }
+.login-screen .slogan { color: var(--text); font-size: 13px; margin-bottom: 30px; }
+
+.login-screen input {
+  width: 100%; max-width: 300px; padding: 16px;
+  border-radius: 16px; border: 2px solid var(--border);
+  background: var(--card); color: white; font-size: 18px;
+  text-align: center; outline: none; transition: border 0.3s;
+}
+.login-screen input:focus { border-color: var(--gold); }
+
+.btn {
+  width: 100%; max-width: 300px; padding: 16px;
+  border: none; border-radius: 30px; font-weight: 700;
+  font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 12px;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #f1c40f, #e0b800);
+  color: #0f172a; box-shadow: 0 4px 0 #b8960c;
+}
+.btn-gold:active { transform: scale(0.96); }
+
+/* TOP BAR */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px; background: var(--card);
+  border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 100;
+}
+.topbar .brand { font-weight: 700; font-size: 16px; color: var(--gold); letter-spacing: -0.5px; }
+.topbar .status { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.online { background: var(--green); animation: pulse 2s infinite; }
+.dot.offline { background: var(--red); }
+
+/* CARDS */
+.card {
+  margin: 12px; padding: 16px; background: var(--card);
+  border-radius: 16px; border: 1px solid var(--border);
+}
+.card h3 {
+  color: var(--gold); font-size: 13px; margin-bottom: 12px;
+  text-transform: uppercase; letter-spacing: 1px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.card h3 .time { font-size: 10px; color: var(--text); text-transform: none; letter-spacing: 0; }
+
+/* TARJETA STOCK CRÍTICO */
+.card-stock-critico {
+  border: 2px solid var(--red) !important;
+  animation: pulseBorder 2s infinite;
+}
+
+@keyframes pulseBorder {
+  0%, 100% { border-color: var(--red); box-shadow: 0 0 10px rgba(239,68,68,0.3); }
+  50% { border-color: #f59e0b; box-shadow: 0 0 20px rgba(245,158,11,0.5); }
+}
+
+/* KPI ROW */
+.row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.row:last-child { border-bottom: none; }
+
+.val-ok { color: var(--green); font-weight: 700; }
+.val-bad { color: var(--red); font-weight: 700; }
+.val-neutral { color: white; font-weight: 600; }
+
+/* VENTA ALTA EN LISTA */
+.venta-alta { animation: highlightPulse 1s ease; }
+@keyframes highlightPulse {
+  0%, 100% { background: transparent; }
+  50% { background: rgba(241, 196, 15, 0.15); }
+}
+
+/* PULSO PARA STOCK CRÍTICO EN LISTA */
+.stock-pulso {
+  animation: stockPulse 1.5s infinite;
+}
+@keyframes stockPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* BUTTON ROW */
+.actions { display: flex; gap: 8px; margin: 0 12px; }
+.btn-sm {
+  flex: 1; padding: 10px; border: none; border-radius: 20px;
+  font-weight: 600; font-size: 11px; cursor: pointer; transition: all 0.2s;
+}
+.btn-print { background: var(--green); color: white; }
+.btn-pdf { background: var(--red); color: white; }
+.btn-csv { background: var(--blue); color: white; }
+.btn-sm:active { transform: scale(0.95); }
+
+/* CANVAS */
+canvas { width: 100%; height: 180px; background: #0a0f1a; border-radius: 12px; margin-top: 8px; }
+
+/* ALERTAS */
+.alerts { margin: 0 12px; }
+.alert {
+  background: var(--card); padding: 10px 14px; margin-bottom: 6px;
+  border-left: 4px solid var(--gold); border-radius: 8px;
+  font-size: 12px; animation: slideIn 0.3s ease; transition: all 0.5s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* BOTÓN SALIR */
+.btn-exit {
+  background: var(--red); color: white; margin: 20px auto;
+  display: block; width: 90%; max-width: 320px;
+}
+
+.hidden { display: none !important; }
+
+/* IMPRESIÓN */
+@media print {
+  body * { visibility: hidden; }
+  #printArea, #printArea * { visibility: visible; }
+  #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
+  #printArea canvas { max-height: 150px; }
+  #printArea .card { border: 1px solid #ddd; background: white; }
+  #printArea h3 { color: #333; }
+  #printArea .val-ok { color: #16a34a; }
+  #printArea .val-bad { color: #dc2626; }
+}
+</style>
 </head>
 <body>
 
 <div class="container">
-    <!-- LOGIN -->
-    <div id="login" class="center">
-        <h2>👁️ VISOR REMOTO</h2>
-        <p>La Family Market</p>
-        <input type="password" id="codigo" placeholder="Código de acceso" autocomplete="off">
-        <button onclick="login()">🔓 ENTRAR</button>
-        <p id="error"></p>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen" class="login-screen">
+  <div class="logo">🏪</div>
+  <h1>FAMILY MARKET</h1>
+  <p class="slogan">Panel de Control Remoto</p>
+  <input type="password" id="codigo" placeholder="🔑 Código de Acceso" autocomplete="off">
+  <button class="btn btn-gold" onclick="login()">🔓 ACCEDER</button>
+  <p id="loginError" style="color:var(--red);margin-top:10px;font-size:13px;"></p>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="dashboard" class="hidden">
+
+  <div class="topbar">
+    <span class="brand">🏪 FAMILY MARKET</span>
+    <span class="status">
+      <span class="dot online" id="statusDot"></span>
+      <span id="statusText">Online</span>
+    </span>
+  </div>
+
+  <div class="alerts" id="alertas"></div>
+
+  <div class="actions" style="margin-top:12px;">
+    <button class="btn-sm btn-print" onclick="imprimirReporte()">🖨️ Imprimir</button>
+    <button class="btn-sm btn-pdf" onclick="descargarPDF()">📄 PDF</button>
+    <button class="btn-sm btn-csv" onclick="exportarCSV()">📥 CSV</button>
+  </div>
+
+  <div id="printArea">
+
+    <!-- KPI -->
+    <div class="card">
+      <h3>📊 Resumen del Día <span class="time" id="lastUpdate"></span></h3>
+      <div class="row"><span>💰 Ventas Hoy</span><span class="val-ok" id="kpiHoy">$0</span></div>
+      <div class="row"><span>🧾 Tickets</span><span class="val-neutral" id="kpiTickets">0</span></div>
+      <div class="row"><span>📊 Ticket Promedio</span><span class="val-neutral" id="kpiPromedio">$0</span></div>
+      <div class="row"><span>⚠️ Stock Bajo</span><span class="val-bad" id="kpiStockBajo">0</span></div>
+      <div class="row"><span>📦 Total Productos</span><span class="val-neutral" id="kpiTotalProd">0</span></div>
     </div>
 
-    <!-- DASHBOARD -->
-    <div id="dash" class="hidden">
-        <div class="topbar" id="usuario">Cargando...</div>
-
-        <div class="card">
-            <h3>💰 GANANCIAS</h3>
-            <div class="ganancias-grid">
-                <div class="ganancia-mini"><span class="g-label">📅 HOY</span><span class="g-valor" id="gHoy">$0</span></div>
-                <div class="ganancia-mini"><span class="g-label">📆 SEMANA</span><span class="g-valor" id="gSemana">$0</span></div>
-                <div class="ganancia-mini"><span class="g-label">📊 MES</span><span class="g-valor" id="gMes">$0</span></div>
-                <div class="ganancia-mini"><span class="g-label">📈 AÑO</span><span class="g-valor" id="gAno">$0</span></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>🛒 ÚLTIMOS MOVIMIENTOS</h3>
-            <div id="ventas"></div>
-        </div>
-
-        <div class="card">
-            <h3>⚠️ STOCK POR AGOTARSE</h3>
-            <div id="stock"></div>
-        </div>
-
-        <div class="card">
-            <h3>📋 ESTADO GENERAL</h3>
-            <div id="resumen"></div>
-        </div>
-
-        <p class="actualizacion" id="actualizacion"></p>
-        <button class="btn-salir" onclick="salir()">🔒 CERRAR SESIÓN</button>
+    <!-- 🔴 PRODUCTOS POR ACABARSE -->
+    <div class="card card-stock-critico" id="cardStockCritico" style="display:none;">
+      <h3>⚠️ ¡PRODUCTOS POR ACABARSE! <span style="font-size:10px;color:var(--red);">Stock ≤ 5</span></h3>
+      <div id="listaStockCritico"></div>
     </div>
+
+    <!-- GRÁFICO -->
+    <div class="card">
+      <h3>📈 Ventas de la Semana</h3>
+      <canvas id="chartSemana"></canvas>
+    </div>
+
+    <!-- ÚLTIMAS VENTAS -->
+    <div class="card">
+      <h3>🛒 Últimos Movimientos</h3>
+      <div id="listaVentas"></div>
+    </div>
+
+    <!-- TOP PRODUCTOS -->
+    <div class="card">
+      <h3>🏆 Lo Más Vendido del Mes</h3>
+      <div id="topProductos"></div>
+    </div>
+
+  </div>
+
+  <button class="btn btn-exit" onclick="salir()">🔒 Cerrar Sesión</button>
+
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const SUPABASE_URL = "https://kospieqzqwbjkjljchlu.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_wlulCYK54_osTvkhq5oNuA_PtRS5apR";
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ========== SUPABASE CLIENT ==========
+const db = window.supabase.createClient(
+  "https://xkqejmzsahmdnhnpctem.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcWVqbXpzYWhtZG5obnBjdGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTM2MjgsImV4cCI6MjA5MjM2OTYyOH0.RKKlgWqyst5XIrDwhMx8yXcBd4K90BbxIarsZlCP07w"
+);
 
-    const CODIGOS = {
-        "familia2024": { nombre: "Jefe", rol: "admin" },
-        "visor2024": { nombre: "Hermano", rol: "visor" }
-    };
+const CODIGOS = { "familia2024": "admin" };
+let ventasData = [], gananciasSemana = [];
+let ventaMaximaAnterior = 0;
 
-    function login() {
-        const codigo = document.getElementById("codigo").value.trim();
-        const errorMsg = document.getElementById("error");
-        if (!codigo) return;
-        errorMsg.textContent = "Verificando...";
+function login() {
+  const c = document.getElementById("codigo").value.trim();
+  if (CODIGOS[c]) {
+    localStorage.setItem("family_visor_session", JSON.stringify({ ok: true }));
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    init();
+  } else {
+    document.getElementById("loginError").textContent = "❌ Código incorrecto";
+  }
+}
 
-        if (CODIGOS[codigo]) {
-            const usuario = CODIGOS[codigo];
-            localStorage.setItem("visor_session", JSON.stringify({ ok: true, nombre: usuario.nombre, rol: usuario.rol }));
-            mostrarDashboard(usuario.nombre);
-        } else {
-            errorMsg.textContent = "❌ Código incorrecto";
+function salir() { localStorage.removeItem("family_visor_session"); location.reload(); }
+
+async function init() {
+  updateConnectionStatus();
+  window.addEventListener('online', updateConnectionStatus);
+  window.addEventListener('offline', updateConnectionStatus);
+  await cargarTodo();
+  suscribirseRealtime();
+  setInterval(cargarTodo, 30000);
+}
+
+function updateConnectionStatus() {
+  const dot = document.getElementById("statusDot");
+  const text = document.getElementById("statusText");
+  if (navigator.onLine) { dot.className = "dot online"; text.textContent = "Online"; }
+  else { dot.className = "dot offline"; text.textContent = "Offline"; }
+}
+
+async function cargarTodo() {
+  try {
+    const hoy = new Date().toISOString().split("T")[0];
+    const horaActual = new Date().getHours();
+
+    const { data: gHoy } = await db.rpc('calcular_ganancias', { fecha_inicio: hoy, fecha_fin: hoy });
+    const ventaHoy = gHoy?.[0]?.ganancia_neta || 0;
+    document.getElementById("kpiHoy").textContent = '$' + ventaHoy.toLocaleString();
+
+    const { data: ventas } = await db.from("ventas").select("*").order("fecha", { ascending: false }).limit(20);
+    ventasData = ventas || [];
+    const ventasHoy = ventasData.filter(v => v.fecha?.startsWith(hoy));
+    const ticketsHoy = ventasHoy.length;
+    document.getElementById("kpiTickets").textContent = ticketsHoy;
+    const promedio = ticketsHoy > 0 ? Math.round(ventaHoy / ticketsHoy) : 0;
+    document.getElementById("kpiPromedio").textContent = '$' + promedio.toLocaleString();
+
+    document.getElementById("listaVentas").innerHTML = ventasData.length > 0 ?
+      ventasData.map(v => {
+        const f = new Date(v.fecha);
+        const esAlta = (v.total || 0) >= 5000;
+        const esDestacada = (v.total || 0) >= 2000 && (v.total || 0) < 5000;
+        return `<div class="row ${esAlta ? 'venta-alta' : ''}">
+          <span>${f.toLocaleDateString('es-ES',{day:'numeric',month:'short'})} ${f.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+          <span class="${esAlta ? 'val-bad' : 'val-ok'}" style="${esAlta ? 'font-size:14px;' : ''}">${esAlta ? '🔥 ' : esDestacada ? '⭐ ' : ''}$${(v.total||0).toLocaleString()}</span>
+        </div>`;
+      }).join("") : '<p style="color:var(--text);text-align:center;padding:10px;">Sin ventas aún</p>';
+
+    // 🔴 STOCK BAJO Y PRODUCTOS POR ACABARSE
+    const { data: bajo } = await db.from("productos")
+      .select("*").lte("stock", 5).gt("stock", 0).eq("agotado", false)
+      .order("stock", { ascending: true });
+    document.getElementById("kpiStockBajo").textContent = bajo?.length || 0;
+
+    const cardStock = document.getElementById("cardStockCritico");
+    const listaStock = document.getElementById("listaStockCritico");
+    
+    if (bajo && bajo.length > 0) {
+      cardStock.style.display = "block";
+      cardStock.style.borderColor = bajo.some(p => p.stock <= 2) ? "var(--red)" : "#f59e0b";
+      
+      listaStock.innerHTML = bajo.map(p => {
+        const nivel = p.stock <= 1 ? "🔴" : p.stock <= 2 ? "🟠" : p.stock <= 3 ? "🟡" : "🟢";
+        const urgencia = p.stock <= 1 ? "¡URGENTE!" : p.stock <= 2 ? "Crítico" : p.stock <= 3 ? "Bajo" : "Precaución";
+        const colorUrgencia = p.stock <= 1 ? "var(--red)" : p.stock <= 2 ? "#f59e0b" : p.stock <= 3 ? "var(--gold)" : "var(--text)";
+        const clasePulso = p.stock <= 1 ? "stock-pulso" : "";
+        return `<div class="row ${clasePulso}">
+          <span>${nivel} ${p.nombre}</span>
+          <span style="color:${colorUrgencia};font-weight:700;font-size:13px;">${urgencia} - Quedan ${p.stock}</span>
+        </div>`;
+      }).join("");
+
+      const criticos = bajo.filter(p => p.stock <= 1);
+      if (criticos.length > 0) {
+        const nombresCriticos = criticos.map(p => p.nombre).join(", ");
+        mostrarAlerta("🚨 ¡COMPRAR YA! " + nombresCriticos + " está por agotarse", "error");
+      }
+    } else {
+      cardStock.style.display = "none";
+      mostrarAlerta("✅ Todos los productos tienen stock suficiente", "success");
+    }
+
+    const { count: totalP } = await db.from("productos").select('*', { count: 'exact', head: true });
+    document.getElementById("kpiTotalProd").textContent = totalP || 0;
+
+    const { data: top } = await db.from("productos_mas_vendidos").select("*").limit(5);
+    document.getElementById("topProductos").innerHTML = top && top.length > 0 ?
+      top.map((p,i) => `<div class="row"><span>#${i+1} ${p.nombre}</span><span class="val-ok">${p.vendidos_mes} vend.</span></div>`).join("") :
+      '<p style="color:var(--text);text-align:center;">Sin datos aún</p>';
+
+    gananciasSemana = [];
+    for (let i=6; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const fechaStr = d.toISOString().split("T")[0];
+      const { data: g } = await db.rpc('calcular_ganancias', { fecha_inicio: fechaStr, fecha_fin: fechaStr });
+      gananciasSemana.push({ fecha: d.toLocaleDateString('es-ES',{weekday:'short'}), valor: g?.[0]?.ganancia_neta || 0 });
+    }
+    graficarSemana(gananciasSemana);
+
+    document.getElementById("lastUpdate").textContent = "🕐 " + new Date().toLocaleTimeString();
+    verificarAlertasInteligentes(ventasHoy, bajo, ventaHoy, ticketsHoy, horaActual);
+    limpiarAlertas();
+  } catch(e) { console.error(e); mostrarAlerta("❌ Error al conectar con el servidor", "error"); }
+}
+
+function verificarAlertasInteligentes(ventasHoy, stockBajo, totalHoy, ticketsHoy, horaActual) {
+  if (ventasHoy.length > 0) {
+    const ventaMaxima = ventasHoy.reduce((max, v) => (v.total || 0) > (max.total || 0) ? v : max, ventasHoy[0]);
+    const totalMax = ventaMaxima.total || 0;
+    if (totalMax > ventaMaximaAnterior) {
+      ventaMaximaAnterior = totalMax;
+      if (totalMax >= 5000) {
+        mostrarAlerta("🏆 ¡COMPRA ESTRELLA! $" + totalMax.toLocaleString(), "gold");
+        if ('speechSynthesis' in window) {
+          const msg = new SpeechSynthesisUtterance(`¡Compra estrella! ${totalMax} pesos`);
+          msg.rate = 1.1; msg.pitch = 1.1; speechSynthesis.speak(msg);
         }
+      } else if (totalMax >= 2000) {
+        mostrarAlerta("⭐ Venta destacada: $" + totalMax.toLocaleString(), "gold");
+      }
     }
+  }
+  if (ticketsHoy === 1 && totalHoy > 0) mostrarAlerta("🔔 ¡Primera venta! $" + totalHoy.toLocaleString(), "success");
+  if (horaActual >= 8 && horaActual <= 12 && ticketsHoy >= 5) mostrarAlerta("📊 ¡Buen ritmo! " + ticketsHoy + " tickets. $" + totalHoy.toLocaleString(), "info");
+  if (horaActual >= 14 && horaActual <= 18 && ticketsHoy >= 10) mostrarAlerta("🔥 ¡Día productivo! " + ticketsHoy + " tickets. $" + totalHoy.toLocaleString(), "info");
 
-    function mostrarDashboard(nombre) {
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("dash").classList.remove("hidden");
-        document.getElementById("usuario").textContent = `👤 ${nombre.toUpperCase()}`;
-        cargarTodo();
+  const stockCritico = stockBajo?.filter(p => (p.stock || 0) <= 2) || [];
+  if (stockCritico.length > 0) {
+    const nombres = stockCritico.slice(0, 3).map(p => p.nombre).join(", ");
+    const resto = stockCritico.length > 3 ? " y " + (stockCritico.length - 3) + " más" : '';
+    mostrarAlerta("⚠️ ¡URGENTE! Stock crítico: " + nombres + resto, "warning");
+  }
+
+  const meta = 10000;
+  if (totalHoy >= meta && !window.metaAlcanzada) {
+    window.metaAlcanzada = true;
+    mostrarAlerta("🎉 ¡META DEL DÍA! $" + totalHoy.toLocaleString(), "success");
+    if ('speechSynthesis' in window) {
+      const msg = new SpeechSynthesisUtterance("¡Meta del día alcanzada! " + totalHoy + " pesos");
+      msg.rate = 1; speechSynthesis.speak(msg);
     }
+  }
+  if (new Date().getHours() === 0) { window.metaAlcanzada = false; ventaMaximaAnterior = 0; }
+}
 
-    async function cargarTodo() {
-        document.getElementById("actualizacion").textContent = "🔄 Sincronizando...";
+function graficarSemana(data) {
+  const c = document.getElementById("chartSemana");
+  if (!c || data.length===0) return;
+  const ctx = c.getContext("2d");
+  c.width = c.offsetWidth; c.height = 180;
+  ctx.clearRect(0,0,c.width,c.height);
+  const max = Math.max(...data.map(d=>d.valor), 1);
+  const step = c.width / data.length;
+  ctx.beginPath(); ctx.strokeStyle = "rgba(241,196,15,0.4)"; ctx.lineWidth = 2; ctx.setLineDash([5,5]);
+  data.forEach((d,i)=>{
+    const x = i*step + step/2, y = c.height - (d.valor/max)*140 - 20;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke(); ctx.setLineDash([]);
+  data.forEach((d,i)=>{
+    const x = i*step + 5, barW = step - 10, barH = (d.valor/max)*140, y = c.height - barH - 20;
+    const gradient = ctx.createLinearGradient(x, y, x, c.height-20);
+    gradient.addColorStop(0, i===data.length-1 ? "#f1c40f" : "#25D366");
+    gradient.addColorStop(1, "#1f2937");
+    ctx.fillStyle = gradient; ctx.fillRect(x, y, barW, barH);
+    ctx.fillStyle = "#94a3b8"; ctx.font = "10px system-ui"; ctx.textAlign = "center";
+    ctx.fillText(d.fecha, x+barW/2, c.height-5);
+    if(d.valor > 0) { ctx.fillStyle = "#25D366"; ctx.font = "bold 9px system-ui"; ctx.fillText('$'+d.valor.toLocaleString(), x+barW/2, y-6); }
+  });
+}
 
-        try {
-            const hoy = new Date().toISOString().split("T")[0];
-            const semana = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
-            const mes = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
-            const ano = new Date().getFullYear() + "-01-01";
+function suscribirseRealtime() {
+  db.channel('family-ventas-live')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ventas' }, payload => {
+      const total = payload.new?.total || 0;
+      mostrarAlerta("🟢 ¡Nueva Venta! $" + total.toLocaleString(), "success");
+      if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance(`Nueva venta por ${total} pesos`);
+        msg.rate = 1.2; msg.pitch = 1; speechSynthesis.speak(msg);
+      }
+      cargarTodo();
+    }).subscribe();
+}
 
-            // Ganancias
-            const { data: gHoy } = await db.rpc('calcular_ganancias', { fecha_inicio: hoy, fecha_fin: hoy });
-            document.getElementById('gHoy').textContent = '$' + (gHoy?.[0]?.ganancia_neta || 0).toLocaleString();
+function mostrarAlerta(msg, tipo = "info") {
+  const div = document.createElement("div"); div.className = "alert";
+  const colores = { gold: "#f1c40f", success: "#25D366", warning: "#f59e0b", error: "#ef4444", info: "#3b82f6" };
+  div.style.borderLeftColor = colores[tipo] || colores.info;
+  div.textContent = msg;
+  document.getElementById("alertas").prepend(div);
+  const tiempo = tipo === "gold" || tipo === "success" ? 8000 : 5000;
+  setTimeout(() => { div.style.opacity = "0"; div.style.transform = "translateX(20px)"; div.style.transition = "all 0.5s"; setTimeout(() => div.remove(), 500); }, tiempo);
+}
 
-            const { data: gSemana } = await db.rpc('calcular_ganancias', { fecha_inicio: semana, fecha_fin: hoy });
-            document.getElementById('gSemana').textContent = '$' + (gSemana?.[0]?.ganancia_neta || 0).toLocaleString();
+function limpiarAlertas() {
+  const alerts = document.querySelectorAll(".alert");
+  alerts.forEach((a, i) => { if (i > 3 && !a.textContent.includes("🏆") && !a.textContent.includes("🎉") && !a.textContent.includes("⏳")) { a.style.opacity = "0"; setTimeout(() => a.remove(), 300); } });
+}
 
-            const { data: gMes } = await db.rpc('calcular_ganancias', { fecha_inicio: mes, fecha_fin: hoy });
-            document.getElementById('gMes').textContent = '$' + (gMes?.[0]?.ganancia_neta || 0).toLocaleString();
+function imprimirReporte() {
+  const contenido = document.getElementById("printArea").innerHTML;
+  const ventana = window.open('', '_blank', 'width=600,height=800');
+  ventana.document.write(`<html><head><title>FAMILY MARKET - Reporte</title><style>body{font-family:system-ui;padding:20px;color:#1a1a1a;}h1{text-align:center;}table{width:100%;border-collapse:collapse;}td,th{padding:8px;border-bottom:1px solid #ddd;}@media print{body{padding:0;}}</style></head><body><h1>🏪 FAMILY MARKET</h1><p style="text-align:center;">${new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} - ${new Date().toLocaleTimeString()}</p>${contenido.replace(/<canvas[^>]*><\/canvas>/g, '<p style="color:#94a3b8;text-align:center;">📊 Gráfico disponible en pantalla</p>')}<p style="text-align:center;margin-top:20px;color:#94a3b8;">Generado por FAMILY MARKET Visor</p></body></html>`);
+  ventana.document.close(); setTimeout(() => ventana.print(), 500);
+}
 
-            const { data: gAno } = await db.rpc('calcular_ganancias', { fecha_inicio: ano, fecha_fin: hoy });
-            document.getElementById('gAno').textContent = '$' + (gAno?.[0]?.ganancia_neta || 0).toLocaleString();
+function descargarPDF() {
+  const contenido = document.getElementById("printArea");
+  const opt = { margin: 5, filename: 'FAMILY_MARKET_' + new Date().toISOString().split('T')[0] + '.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, backgroundColor: '#0a0f1a' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+  html2pdf().set(opt).from(contenido).save().then(() => { mostrarAlerta("📄 PDF descargado", "success"); });
+}
 
-            // Últimas ventas
-            const { data: ultimas } = await db.from("venta_familiar")
-                .select("*").order("fecha", { ascending: false }).limit(10);
-            document.getElementById("ventas").innerHTML = ultimas && ultimas.length > 0 ? ultimas.map(v => `
-                <div class="row">
-                    <span>${new Date(v.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })} ${new Date(v.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    <span class="ok">$${v.total.toLocaleString()}</span>
-                </div>
-            `).join("") : '<p style="color:#94a3b8;text-align:center;">Sin ventas aún</p>';
+function exportarCSV() {
+  let csv = "Fecha,Hora,Total\n";
+  ventasData.forEach(v => { const f = new Date(v.fecha); csv += `${f.toLocaleDateString()},${f.toLocaleTimeString()},${v.total||0}\n`; });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'FAMILY_MARKET_ventas_' + new Date().toISOString().split('T')[0] + '.csv'; a.click();
+  mostrarAlerta("📥 CSV descargado", "success");
+}
 
-            // Stock bajo
-            const { data: bajo } = await db.from("productos_familiares")
-                .select("*").lte("stock", 5).eq("agotado", false).order("stock", { ascending: true }).limit(10);
-            document.getElementById("stock").innerHTML = bajo && bajo.length > 0 ? bajo.map(p => `
-                <div class="row"><span>${p.nombre}</span><span class="bad">Quedan ${p.stock}</span></div>
-            `).join("") : '<p style="color:#25D366;text-align:center;">✅ Todo en niveles óptimos</p>';
-
-            // Resumen + Top 5
-            const { count: totalP } = await db.from("productos_familiares").select('*', { count: 'exact', head: true });
-            const { count: activos } = await db.from("productos_familiares").select('*', { count: 'exact', head: true }).eq("agotado", false);
-            const { count: agotados } = await db.from("productos_familiares").select('*', { count: 'exact', head: true }).eq("agotado", true);
-            const { data: top } = await db.from("productos_mas_vendidos").select("*").limit(5);
-
-            document.getElementById("resumen").innerHTML = `
-                <div class="row"><span>📦 Total productos</span><span class="ok">${totalP || 0}</span></div>
-                <div class="row"><span>🟢 Activos</span><span class="ok">${activos || 0}</span></div>
-                <div class="row"><span>🔴 Agotados</span><span class="bad">${agotados || 0}</span></div>
-                <hr style="border-color:#334155;margin:10px 0;">
-                <p style="color:#f1c40f;font-size:12px;margin-bottom:8px;font-weight:bold;">🏆 LO MÁS VENDIDO (MES)</p>
-                ${top && top.length > 0 ? top.map((p, i) => `
-                    <div class="row"><span>#${i+1} ${p.nombre}</span><span class="ok">${p.vendidos_mes} vendidos</span></div>
-                `).join("") : '<p style="color:#94a3b8;text-align:center;">Sin datos aún</p>'}
-                <hr style="border-color:#334155;margin:10px 0;">
-                <div class="row"><span>☁️ Conexión</span><span class="ok">Conectado</span></div>
-            `;
-
-            document.getElementById("actualizacion").textContent = "🕐 Actualizado: " + new Date().toLocaleTimeString();
-        } catch (e) {
-            console.error(e);
-            document.getElementById("actualizacion").textContent = "❌ Error al cargar datos";
-        }
-    }
-
-    function salir() {
-        localStorage.removeItem("visor_session");
-        location.reload();
-    }
-
-    // Auto-login
-    const sesion = localStorage.getItem("visor_session");
-    if (sesion) {
-        try {
-            const data = JSON.parse(sesion);
-            if (data.ok) mostrarDashboard(data.nombre);
-        } catch (e) {
-            localStorage.removeItem("visor_session");
-        }
-    }
-
-    // Refrescar cada 60 segundos
-    setInterval(() => {
-        if (!document.getElementById("dash").classList.contains("hidden")) {
-            cargarTodo();
-        }
-    }, 60000);
+const sesion = localStorage.getItem("family_visor_session");
+if (sesion) { try { const d = JSON.parse(sesion); if (d.ok) { document.getElementById("loginScreen").classList.add("hidden"); document.getElementById("dashboard").classList.remove("hidden"); init(); } } catch(e) { localStorage.removeItem("family_visor_session"); } }
 </script>
 </body>
 </html>
