@@ -74,21 +74,49 @@
         /* BUSCADOR */
         .search-box {
             display: flex; align-items: center; background: #1e293b;
-            padding: 8px; border-radius: 8px;
+            padding: 8px; border-radius: 8px; margin-bottom: 10px;
         }
         .search-box input {
             flex: 1; background: transparent; border: none;
             outline: none; color: white; margin-left: 6px;
         }
 
+        .panel-contador {
+            text-align: center; font-size: 12px; color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
         /* TABLA */
-        .tabla-productos-container { overflow-x: auto; }
+        .tabla-productos-container { overflow-x: auto; margin-bottom: 20px; }
         .tabla-productos {
-            width: 100%; border-collapse: collapse; font-size: 13px;
+            width: 100%; border-collapse: collapse; font-size: 12px;
+            min-width: 750px; /* Para que quepa en pantallas pequeñas con scroll */
         }
         .tabla-productos th, .tabla-productos td {
-            padding: 8px; border-bottom: 1px solid #334155; text-align: center;
+            padding: 6px 4px; border-bottom: 1px solid #334155; text-align: center;
+            white-space: nowrap;
         }
+        .tabla-productos th {
+            background: #1e293b; color: #f1c40f; font-size: 11px;
+            position: sticky; top: 0; z-index: 1;
+        }
+        .tabla-productos td input[type="text"] {
+            width: 100%; min-width: 100px; background: transparent;
+            border: 1px solid #334155; color: white; padding: 4px;
+            border-radius: 4px; text-align: center;
+        }
+        .tabla-productos td input[type="number"] {
+            width: 60px; background: transparent;
+            border: 1px solid #334155; color: white; padding: 4px;
+            border-radius: 4px; text-align: center;
+        }
+        .tabla-productos td button {
+            background: #ef4444; color: white; border: none;
+            padding: 4px 8px; border-radius: 4px; cursor: pointer;
+            font-size: 14px;
+        }
+        .texto-tachado { text-decoration: line-through; opacity: 0.6; }
+        .fila-agotada { opacity: 0.5; background: rgba(239, 68, 68, 0.1); }
 
         /* FORM */
         .panel-form { margin-top: 24px; }
@@ -136,6 +164,11 @@
             font-size: 10px; padding: 2px 6px; border-radius: 10px;
             margin-left: 4px; animation: stockPulse 1.5s infinite;
         }
+
+        /* GANANCIA EN TABLA */
+        .ganancia-positiva { color: #25D366; font-weight: bold; }
+        .ganancia-negativa { color: #ef4444; font-weight: bold; }
+        .ganancia-cero { color: #94a3b8; }
     </style>
 </head>
 
@@ -205,15 +238,17 @@
                 <span id="contadorProductos">0 / 200 productos</span>
             </div>
 
-            <!-- TABLA -->
+            <!-- TABLA CON NUEVAS COLUMNAS -->
             <div class="tabla-productos-container">
                 <table class="tabla-productos" id="tablaProductos">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Producto</th>
-                            <th>Precio</th>
-                            <th>Stock</th>
+                            <th>PRODUCTO</th>
+                            <th>💰 COSTO</th>
+                            <th>💲 VENTA</th>
+                            <th>📊 GANANCIA</th>
+                            <th>📦 STOCK</th>
                             <th>AGOT</th>
                             <th>🗑️</th>
                         </tr>
@@ -223,23 +258,25 @@
                 <div id="paginacionPanel" class="paginacion-container"></div>
             </div>
 
-            <!-- FORM -->
+            <!-- FORMULARIO NUEVO PRODUCTO -->
             <div class="panel-form">
                 <h3>➕ NUEVO PRODUCTO</h3>
                 <input type="text" id="nuevoNombre" placeholder="Nombre del producto" class="input-base">
-                <input type="number" id="nuevoPrecio" placeholder="Precio (CUP)" class="input-base">
-                <input type="number" id="nuevoStock" placeholder="Stock inicial" class="input-base">
+                <input type="number" id="nuevoCosto" placeholder="💰 Costo (lo que te costó)" class="input-base">
+                <input type="number" id="nuevoPrecio" placeholder="💲 Precio de venta (CUP)" class="input-base">
+                <input type="number" id="nuevoStock" placeholder="📦 Stock inicial" class="input-base">
                 <button class="btn-guardar" id="btnGuardarProducto">💾 GUARDAR PRODUCTO</button>
             </div>
 
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL MODO RÁPIDO -->
     <div id="modoRapidoModal" class="modal-overlay hidden">
         <div class="modal-content">
             <h3>📋 Pega tu lista de productos</h3>
-            <p>Formato: Nombre + precio + stock<br>Ej: Aceite 900ml 1350 15</p>
+            <p style="font-size:12px;color:#94a3b8;">Formato: Nombre + Costo + Precio + Stock<br>
+            Ej: Arroz 1 libra 800 1000 200</p>
             <textarea id="listaRapida" rows="8"></textarea>
             <div id="progressoRapido" class="progresso-rapido hidden">
                 <div class="progresso-barra"></div>
@@ -253,7 +290,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
+    <script src="script-v2.js?v=2"></script>
 
     <!-- SCRIPT PARA STOCK BAJO EN PANEL -->
     <script>
@@ -285,20 +322,34 @@
         }
         
         // También actualizar la tabla para marcar filas con stock bajo
+        // NOTA: La columna de stock ahora es la 6 (índice 5)
         setTimeout(() => {
             const filas = document.querySelectorAll('#tablaProductosBody tr');
             filas.forEach(fila => {
-                const celdaStock = fila.querySelector('td:nth-child(4) input');
+                // Buscar el input de stock en la columna 6 (📦 STOCK)
+                const celdas = fila.querySelectorAll('td');
+                const celdaStock = celdas[5]; // Columna STOCK (6ta columna, índice 5)
                 if (celdaStock) {
-                    const stock = parseInt(celdaStock.value) || 0;
-                    if (stock <= 5 && stock > 0) {
-                        fila.classList.add('fila-stock-bajo');
-                    } else {
-                        fila.classList.remove('fila-stock-bajo');
+                    const inputStock = celdaStock.querySelector('input');
+                    if (inputStock) {
+                        const stock = parseInt(inputStock.value) || 0;
+                        if (stock <= 5 && stock > 0) {
+                            fila.classList.add('fila-stock-bajo');
+                        } else {
+                            fila.classList.remove('fila-stock-bajo');
+                        }
                     }
                 }
             });
         }, 500);
+    }
+
+    // Función para filtrar productos en el panel
+    function filtrarProductosPanel() {
+        // Esta función llama a filtrarPanel() del script.js
+        if (typeof filtrarPanel === 'function') {
+            filtrarPanel();
+        }
     }
 
     // Ejecutar al cargar y cada 30 segundos
