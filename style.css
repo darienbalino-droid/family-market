@@ -650,4 +650,4 @@ body.modo-claro .btn-panel-link,
 body.modo-claro .btn-ajustes,
 body.modo-claro .btn-tema {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
+        }
