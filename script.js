@@ -83,7 +83,8 @@ async function sincronizarVentasPendientes() {
             const { error } = await db.from("ventas").insert({
                 fecha: venta.fecha,
                 total: venta.total,
-                items: venta.items || []
+                items: venta.items || [],
+                resumen: venta.detalle || ''
             });
             
             if (!error) {
@@ -105,7 +106,6 @@ async function sincronizarVentasPendientes() {
 async function init() {
     console.log('🧾 La Family Market - Iniciando...');
     
-    // Intentar cargar desde Supabase primero
     if (navigator.onLine) {
         const { data, error } = await db.from("productos").select("*").order('id', { ascending: true });
         if (data && !error) {
@@ -122,21 +122,14 @@ async function init() {
         if (local) App.articulos = JSON.parse(local);
     }
     
-    // Si no hay nada, crear productos de ejemplo
     if (App.articulos.length === 0) {
-        App.articulos = [
-            { id: 1, nombre: "Arroz 5 kg", precio: 1200, stock: 25, agotado: false, stock_minimo: 5, costo: 0 },
-            { id: 2, nombre: "Frijoles Negros 1 kg", precio: 850, stock: 30, agotado: false, stock_minimo: 5, costo: 0 },
-            { id: 3, nombre: "Aceite Vegetal 900 ml", precio: 1350, stock: 20, agotado: false, stock_minimo: 5, costo: 0 },
-            { id: 4, nombre: "Azúcar Blanca 1 kg", precio: 450, stock: 40, agotado: false, stock_minimo: 5, costo: 0 },
-            { id: 5, nombre: "Sal de Mesa 1 kg", precio: 180, stock: 50, agotado: false, stock_minimo: 5, costo: 0 }
-        ];
-        guardarLocal();
-    }
+    App.articulos = [];
+    guardarLocal();
+    console.log('📦 Sin productos de ejemplo. Listo para pegar la Lista Rápida.');
+}
 
     if (App.isPanel) {
         renderPanel();
-        // Disparar actualización de stock panel después de cargar
         setTimeout(() => {
             if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
         }, 500);
@@ -359,9 +352,11 @@ window.cancelarCheckout = () => {
     updateFloat();
 };
 
-// ========== FINALIZAR VENTA (CON SINCRONIZACIÓN A SUPABASE) ==========
+// ========== FINALIZAR VENTA (MODIFICADA PARA EL DUEÑO) ==========
 window.finalizarVenta = () => {
     if (App.carrito.length === 0) return;
+
+    const resumenProductos = App.carrito.map(i => `${i.nombre} (${i.cantidad})`).join(", ");
 
     const itemsVenta = App.carrito.map(i => ({
         id: i.id,
@@ -370,7 +365,6 @@ window.finalizarVenta = () => {
         cantidad: i.cantidad
     }));
 
-    // Actualizar stock local
     App.carrito.forEach(i => {
         const art = App.articulos.find(a => a.id == i.id);
         if (art) { 
@@ -380,41 +374,42 @@ window.finalizarVenta = () => {
     });
 
     const total = App.carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
-    const venta = { fecha: new Date().toISOString(), total, items: itemsVenta };
+    
+    const venta = { 
+        fecha: new Date().toISOString(), 
+        total, 
+        items: itemsVenta,
+        detalle: resumenProductos
+    };
     
     App.ventas.push(venta);
     guardarLocal();
 
-    // Guardar en historial global
     const historialGlobal = JSON.parse(localStorage.getItem('family_historial_global') || '[]');
     historialGlobal.push(venta);
     localStorage.setItem('family_historial_global', JSON.stringify(historialGlobal));
 
-    // Guardar para sincronizar con Supabase
     const ventasSync = JSON.parse(localStorage.getItem('family_ventas_sync') || '[]');
     ventasSync.push(venta);
     localStorage.setItem('family_ventas_sync', JSON.stringify(ventasSync));
 
-    // Intentar subir a Supabase AHORA
     if (navigator.onLine) {
         db.from("ventas").insert({
             fecha: venta.fecha,
             total: total,
-            items: itemsVenta
+            items: itemsVenta,
+            resumen: resumenProductos
         }).then(({ error }) => {
             if (!error) {
                 const vs = JSON.parse(localStorage.getItem('family_ventas_sync') || '[]');
                 const idx = vs.findIndex(v => v.fecha === venta.fecha);
                 if (idx >= 0) vs.splice(idx, 1);
                 localStorage.setItem('family_ventas_sync', JSON.stringify(vs));
-                console.log('✅ Venta subida a Supabase');
-            } else {
-                console.error('❌ Error subir venta:', error);
             }
-        }).catch(err => console.error('❌ Error:', err));
+        });
     }
 
-    alert(`✅ Venta registrada! Total: $${total.toLocaleString()}`);
+    alert(`✅ Venta registrada!\n${resumenProductos}\nTotal: $${total.toLocaleString()}`);
     App.carrito = [];
     renderTab("vender");
     if (navigator.onLine) sync();
@@ -428,12 +423,10 @@ window.cerrarCaja = () => {
     const cantidad = App.ventas.length;
     const hoy = new Date().toISOString().split("T")[0];
     
-    // Guardar en localStorage
     const cierres = JSON.parse(localStorage.getItem('family_cierres') || '[]');
     cierres.push({ fecha: hoy, total, ventas: cantidad });
     localStorage.setItem('family_cierres', JSON.stringify(cierres));
     
-    // Guardar en Supabase
     if (navigator.onLine) {
         db.from("cierres").upsert({ 
             fecha: hoy, 
@@ -450,7 +443,7 @@ window.cerrarCaja = () => {
     renderTab("caja");
 };
 
-// ========== INFORMES ==========
+// ========== INFORMES (MODIFICADA PARA MOSTRAR DETALLE) ==========
 async function cargarInformes() {
     const cont = document.getElementById("informesContent");
     if (!cont) return;
@@ -460,13 +453,22 @@ async function cargarInformes() {
 
     let html = '';
 
-    html += `<div class="informe-card"><h3 class="informe-titulo">📊 VENTAS DE HOY</h3>`;
+    html += `<div class="informe-card"><h3 class="informe-titulo">📊 DESGLOSE DE VENTAS HOY</h3>`;
     if (App.ventas.length === 0) {
         html += `<p style="color:#94a3b8;text-align:center;">Aún no hay ventas hoy</p>`;
     } else {
         App.ventas.slice().reverse().forEach((v, i) => {
             const fecha = new Date(v.fecha);
-            html += `<div class="informe-row"><span>Venta ${App.ventas.length - i} (${fecha.toLocaleTimeString()})</span><span style="color:#25D366;font-weight:bold;">$${v.total.toLocaleString()}</span></div>`;
+            html += `
+                <div style="border-bottom:1px solid #334155; padding: 10px 0;">
+                    <div class="informe-row">
+                        <span>Venta ${App.ventas.length - i} (${fecha.toLocaleTimeString()})</span>
+                        <span style="color:#25D366;font-weight:bold;">$${v.total.toLocaleString()}</span>
+                    </div>
+                    <div style="color:#94a3b8; font-size: 0.85em; margin-top: 4px;">
+                        📦 ${v.detalle || 'Sin detalle'}
+                    </div>
+                </div>`;
         });
         const totalHoy = App.ventas.reduce((s, v) => s + v.total, 0);
         html += `<div class="informe-row" style="border-top:2px solid #f1c40f;margin-top:8px;padding-top:8px;"><strong>TOTAL HOY</strong><strong style="color:#25D366;">$${totalHoy.toLocaleString()}</strong></div>`;
@@ -490,7 +492,16 @@ async function cargarInformes() {
     } else {
         historialGlobal.slice(-10).reverse().forEach(v => {
             const f = new Date(v.fecha);
-            html += `<div class="informe-row"><span>${f.toLocaleDateString()} ${f.toLocaleTimeString()}</span><span style="color:#25D366;font-weight:bold;">$${v.total.toLocaleString()}</span></div>`;
+            html += `
+                <div style="border-bottom:1px solid #334155; padding: 8px 0;">
+                    <div class="informe-row">
+                        <span>${f.toLocaleDateString()} ${f.toLocaleTimeString()}</span>
+                        <span style="color:#25D366;font-weight:bold;">$${v.total.toLocaleString()}</span>
+                    </div>
+                    <div style="color:#94a3b8; font-size: 0.85em; margin-top: 2px;">
+                        📦 ${v.detalle || 'Sin detalle'}
+                    </div>
+                </div>`;
         });
     }
     html += `</div>`;
@@ -502,7 +513,16 @@ async function cargarInformes() {
                 html += `<div class="informe-card"><h3 class="informe-titulo">☁️ REGISTROS EN LA NUBE</h3>`;
                 ventasDB.forEach(v => {
                     const f = new Date(v.fecha || v.created_at);
-                    html += `<div class="informe-row"><span>${f.toLocaleDateString()} ${f.toLocaleTimeString()}</span><span style="color:#25D366;font-weight:bold;">$${v.total.toLocaleString()}</span></div>`;
+                    html += `
+                        <div style="border-bottom:1px solid #334155; padding: 8px 0;">
+                            <div class="informe-row">
+                                <span>${f.toLocaleDateString()} ${f.toLocaleTimeString()}</span>
+                                <span style="color:#25D366;font-weight:bold;">$${v.total.toLocaleString()}</span>
+                            </div>
+                            <div style="color:#94a3b8; font-size: 0.85em; margin-top: 2px;">
+                                📦 ${v.resumen || v.detalle || 'Sin detalle'}
+                            </div>
+                        </div>`;
                 });
                 html += `</div>`;
             }
@@ -527,7 +547,6 @@ function renderPanel() {
     actualizarContador();
     cargarStats();
     
-    // Actualizar stock panel después de renderizar
     setTimeout(() => {
         if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
     }, 1000);
@@ -546,19 +565,24 @@ function renderTablaPanel() {
         const stockClass = (p.stock || 0) <= 5 && (p.stock || 0) > 0 && !p.agotado ? 'fila-stock-bajo' : '';
         const badgeBajo = (p.stock || 0) <= 5 && (p.stock || 0) > 0 && !p.agotado ? 
             `<span class="badge-stock-bajo">¡${p.stock}!</span>` : '';
+        const costo = p.costo || 0;
+        const ganancia = p.precio - costo;
+        const gananciaColor = ganancia > 0 ? 'color:#25D366;' : ganancia < 0 ? 'color:#ef4444;' : 'color:#94a3b8;';
+        
         return `
         <tr class="${p.agotado ? 'fila-agotada' : ''} ${stockClass}">
             <td>${i + 1}</td>
             <td><input type="text" value="${p.nombre}" onchange="updateCampo(${p.id},'nombre',this.value)" class="${p.agotado?'texto-tachado':''}">${badgeBajo}</td>
-            <td><input type="number" value="${p.precio}" onchange="updateCampo(${p.id},'precio',parseInt(this.value))"></td>
-            <td><input type="number" value="${p.stock}" onchange="updateCampo(${p.id},'stock',parseInt(this.value))"></td>
+            <td><input type="number" value="${costo}" onchange="updateCampo(${p.id},'costo',parseInt(this.value))" style="width:80px;"></td>
+            <td><input type="number" value="${p.precio}" onchange="updateCampo(${p.id},'precio',parseInt(this.value))" style="width:80px;"></td>
+            <td style="${gananciaColor} font-weight:bold;">$${ganancia.toLocaleString()}</td>
+            <td><input type="number" value="${p.stock}" onchange="updateCampo(${p.id},'stock',parseInt(this.value))" style="width:70px;"></td>
             <td><input type="checkbox" ${p.agotado?'checked':''} onchange="toggleAgotado(${p.id},this.checked)"></td>
             <td><button onclick="eliminarProducto(${p.id})">🗑️</button></td>
         </tr>`;
     }).join("");
     actualizarContador();
     
-    // Actualizar panel de stock después de renderizar tabla
     setTimeout(() => {
         if (typeof actualizarStockPanel === 'function') actualizarStockPanel();
     }, 300);
@@ -600,14 +624,16 @@ window.eliminarProducto = (id) => {
 window.agregarProducto = () => {
     if (App.articulos.length >= LIMITE) { alert("Límite alcanzado (200 productos)"); return; }
     const n = document.getElementById("nuevoNombre")?.value?.trim();
+    const c = parseInt(document.getElementById("nuevoCosto")?.value) || 0;
     const p = parseInt(document.getElementById("nuevoPrecio")?.value);
     const s = parseInt(document.getElementById("nuevoStock")?.value);
     if (!n || isNaN(p) || isNaN(s)) { alert("Completa todos los campos"); return; }
-    const nuevo = { id: Date.now(), nombre: n, precio: p, stock: s, agotado: false, stock_minimo: 5, costo: 0 };
+    const nuevo = { id: Date.now(), nombre: n, precio: p, stock: s, costo: c, agotado: false, stock_minimo: 5 };
     App.articulos.push(nuevo);
     App.pendientes.push({ tipo: "insert", datos: nuevo });
     guardarLocal();
     document.getElementById("nuevoNombre").value = "";
+    document.getElementById("nuevoCosto").value = "";
     document.getElementById("nuevoPrecio").value = "";
     document.getElementById("nuevoStock").value = "";
     renderTablaPanel();
@@ -641,15 +667,24 @@ function procesarListaRapida() {
         if (!linea.trim()) continue;
         const nums = linea.match(/\d+/g);
         if (!nums || nums.length < 2) continue;
-        const stock = parseInt(nums[nums.length - 1]);
+        
+        // Ahora lee 3 números: costo, precio, stock
+        const costo = nums.length >= 3 ? parseInt(nums[nums.length - 3]) : 0;
         const precio = parseInt(nums[nums.length - 2]);
+        const stock = parseInt(nums[nums.length - 1]);
+        
         let nombre = linea.trim();
-        nombre = nombre.replace(new RegExp(`\\s*${stock}\\s*$`), '').replace(new RegExp(`\\s*${precio}\\s*$`), '').replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').trim();
+        // Quitar los números del final del nombre
+        nombre = nombre.replace(new RegExp(`\\s*${stock}\\s*$`), '')
+                       .replace(new RegExp(`\\s*${precio}\\s*$`), '')
+                       .replace(new RegExp(`\\s*${costo}\\s*$`), '')
+                       .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').trim();
+        
         if (!nombre || precio <= 0 || stock <= 0) continue;
         if (App.articulos.length >= LIMITE) break;
         if (App.articulos.some(a => a.nombre.toLowerCase() === nombre.toLowerCase())) { duplicados++; continue; }
 
-        const nuevo = { id: Date.now() + agregados, nombre, precio, stock, agotado: false, stock_minimo: 5, costo: 0 };
+        const nuevo = { id: Date.now() + agregados, nombre, precio, stock, costo, agotado: false, stock_minimo: 5 };
         App.articulos.push(nuevo);
         App.pendientes.push({ tipo: "insert", datos: nuevo });
         agregados++;
